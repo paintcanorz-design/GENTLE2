@@ -133,7 +133,7 @@ export const AiInputPanel = ({ aiInputValue, setAiInputValue, aiLoading, aiMode,
                     type="text" 
                     id="custom-gen-input" 
                     className="custom-ai-input" 
-                    placeholder="✨ 輸入關鍵字句 或 貼上粉絲留言..." 
+                    placeholder="輸入關鍵字，句或貼上想回應的留言..." 
                     value={aiInputValue} 
                     onChange={(e) => setAiInputValue(e.target.value)}
                     style={{ paddingRight: '36px' }}
