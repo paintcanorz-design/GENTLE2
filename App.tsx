@@ -36,6 +36,7 @@ export default function App() {
     const [toastMsg, setToastMsg] = useState<string | null>(null);
     const [statusText, setStatusText] = useState("請選擇預設辭庫或AI生成");
     const [aiLoading, setAiLoading] = useState(false);
+    const [aiMode, setAiMode] = useState<'custom' | 'reply' | 'rewrite' | null>(null);
     
     // Modals
     const [showSettings, setShowSettings] = useState(false);
@@ -52,6 +53,7 @@ export default function App() {
     const seenIndices = useRef<Set<number>>(new Set());
     const aiStartTime = useRef<number>(0);
     const aiCount = useRef<number>(0);
+    const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     
     // Achievement Refs
     const lastCopyTime = useRef<number>(0);
@@ -90,11 +92,8 @@ export default function App() {
                 if (cols.length < 4) return;
                 
                 // Keep emojis in keys and content during parsing
-                // They will be stripped only when rendering UI in Pure Mode
                 const mainKey = cols[0].trim().replace(/^"|"$/g, '');
                 const subKey = cols[1].trim().replace(/^"|"$/g, '');
-                
-                // Do NOT use stripEmojis here, we want to keep them in the DB
                 const jp = cols[2].trim().replace(/^"|"$/g, '');
                 const cn = cols[3].trim().replace(/^"|"$/g, '');
                 
@@ -146,6 +145,51 @@ export default function App() {
         loadLocal();
         setTimeout(() => setShowWelcome(true), 1000);
     }, []);
+
+    // --- Effect: AI Result Listener ---
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            const data = event.data;
+            if (data.type === 'BATCH_AI_RESULT') {
+                const { results } = data;
+                setAiLoading(false);
+                setAiMode(null);
+                if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
+
+                if (results && results.error === 'RATE_LIMIT') {
+                    showToast("⏳ 系統忙碌中，請稍後再試");
+                    return;
+                }
+
+                if (results && Array.isArray(results)) {
+                    setDisplayItems(prev => {
+                        const newItems = [...prev];
+                        results.forEach((item: any, index: number) => {
+                            if (newItems[index]) {
+                                newItems[index] = {
+                                    ...newItems[index],
+                                    base: {
+                                        jp: item.text,
+                                        cn: item.translation || newItems[index].base.cn
+                                    },
+                                    isUpgraded: true
+                                };
+                            }
+                        });
+                        return newItems;
+                    });
+                    
+                    setStatusText("✅ AI 生成完成");
+                    showToast("✨ 全體 AI 擴寫完成！");
+                    unlockAchievement("ai_awakening");
+                    triggerHaptic(100);
+                }
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, []); 
 
     // --- Effect: Apply Settings (Theme, Font, etc) ---
     useEffect(() => {
@@ -228,15 +272,13 @@ export default function App() {
             return newAchieve;
         });
         
-        // Check for all_complete (Delayed to avoid state race conditions)
+        // Check for all_complete
         setTimeout(() => {
             setUserAchieve(current => {
                 const allKeys = Object.keys(ACHIEVEMENTS).filter(k => k !== 'all_complete');
                 const unlockedCount = allKeys.filter(k => current[k]?.unlocked).length;
                 if (unlockedCount === allKeys.length && !current['all_complete']?.unlocked) {
                     const finalAchieve = { ...current, ['all_complete']: { unlocked: true, date: Date.now() } };
-                    // We need to show toast for this too, but for simplicity, the next render or manual trigger would be safer
-                    // Here we just update state silently or could duplicate toast logic
                     return finalAchieve;
                 }
                 return current;
@@ -465,59 +507,81 @@ export default function App() {
         const now = Date.now();
         if (now - aiStartTime.current > 60000) { aiCount.current = 0; aiStartTime.current = now; }
         if (aiCount.current === 0) aiStartTime.current = now;
-        if (aiCount.current >= 5) {
-            showToast("⏳ 系統忙碌中，請稍後再試");
+        if (aiCount.current >= (mode === 'rewrite' ? 3 : 5)) {
+            showToast(mode === 'rewrite' ? "一次生成太多嘍，請稍後再試 🥺" : "休息一下，靈感正在冷卻中 🧊");
             return;
         }
         aiCount.current++;
         setAiLoading(true);
+        setAiMode(mode);
         triggerHaptic(20);
 
+        let phrases: string[] = [];
+        let context = { main: "一般", sub: "通用" };
+
         if (mode === 'rewrite') {
-            setTimeout(() => {
-                setDisplayItems(prev => prev.map(item => ({
-                    ...item,
-                    base: { 
-                        ...item.base, 
-                        jp: item.base.jp + " (AI優化)",
-                        cn: item.base.cn + " (AI優化)"
-                    },
-                    emoji: generateEmoji(),
-                    isUpgraded: true // Added flag for visual effect
-                })));
+            if (displayItems.length === 0) {
+                showToast("⚠️ 清單是空的");
                 setAiLoading(false);
-                setStatusText("✅ AI 生成完成");
-                showToast("✨ 全體 AI 擴寫完成！");
-                unlockAchievement("ai_awakening");
-            }, 2000);
-        } else {
-            const seed = (document.getElementById('custom-gen-input') as HTMLInputElement)?.value || "Love";
-            if (!seed.trim()) {
-                showToast("⚠️ 請先輸入關鍵字");
-                setAiLoading(false);
+                setAiMode(null);
                 return;
             }
+            phrases = displayItems.map(d => d.base.jp);
             
-            setStatusText(mode === 'reply' ? '✨ 回覆生成中...' : '✨ 關鍵語句生成中...');
-            
-            setTimeout(() => {
-                const newItems = Array(settings.resultCount).fill(0).map((_, i) => ({
-                    base: { 
-                        jp: mode === 'reply' ? `對「${seed}」的回覆 ${i+1}` : `關於「${seed}」的讚美 ${i+1}`, 
-                        cn: "AI 生成內容範例" 
-                    },
-                    emoji: generateEmoji(),
-                    specificPos: 1,
-                    isUpgraded: true
-                }));
-                setDisplayItems(newItems);
+            if (currentMain === 'featured') {
+                context = { main: "精選收藏", sub: "我的最愛" };
+            } else if (currentMain && database[currentMain]) {
+                context.main = database[currentMain].label;
+                if (currentSub && database[currentMain].subs[currentSub]) {
+                    context.sub = database[currentMain].subs[currentSub].label;
+                }
+            }
+            setStatusText(`✨ ${context.sub} + AI 改寫中...`);
+        } else {
+            const val = searchQuery.trim();
+            if (!val) {
+                showToast(mode === 'reply' ? "⚠️ 請先輸入或貼上要回覆的內容！" : "⚠️ 請先輸入想要生成的關鍵字！");
                 setAiLoading(false);
-                setStatusText("✅ AI 生成完成");
-                setCurrentMain('Custom');
-                setCurrentSub(mode === 'reply' ? 'AI Reply' : 'AI Custom');
-                unlockAchievement("ai_awakening");
-            }, 2000);
+                setAiMode(null);
+                return;
+            }
+
+            const count = settings.resultCount;
+            const placeholderCN = mode === 'reply' ? "AI 繪師正在構思回覆..." : "AI 正在構思色色的描述...";
+            
+            const newItems = Array(count).fill(0).map(() => ({
+                base: { jp: val, cn: placeholderCN },
+                emoji: generateEmoji(),
+                specificPos: 1
+            }));
+            
+            setDisplayItems(newItems);
+            
+            if (mode === 'reply') {
+                setCurrentMain("自訂生成");
+                setCurrentSub("回覆生成");
+                context = { main: "ReplyMode", sub: "ArtistReply" };
+                setStatusText('✨ 回覆生成中...');
+            } else {
+                setCurrentMain("自訂生成");
+                setCurrentSub(val);
+                context = { main: "使用者自訂", sub: val };
+                setStatusText('✨ 關鍵語句生成中...');
+            }
+            phrases = new Array(count).fill(val);
         }
+
+        window.parent.postMessage({
+            type: 'REQUEST_BATCH_AI',
+            phrases: phrases,
+            context: context
+        }, "*");
+
+        if (aiTimeoutRef.current) clearTimeout(aiTimeoutRef.current);
+        aiTimeoutRef.current = setTimeout(() => {
+            setAiLoading(false);
+            setAiMode(null);
+        }, 15000);
     };
 
     const handleSearch = () => {
@@ -599,6 +663,7 @@ export default function App() {
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 aiLoading={aiLoading}
+                aiMode={aiMode}
                 requestAI={requestAI}
             />
 
@@ -622,6 +687,7 @@ export default function App() {
                 setDisplayItems={setDisplayItems}
                 generateEmoji={generateEmoji}
                 aiLoading={aiLoading}
+                aiMode={aiMode}
                 requestAI={requestAI}
                 emojiLevel={emojiLevel}
                 setEmojiLevel={setEmojiLevel}

@@ -117,13 +117,23 @@ export const DictionaryPanel = ({
     </div>
 );
 
-export const AiInputPanel = ({ searchQuery, setSearchQuery, aiLoading, requestAI }: any) => (
+export const AiInputPanel = ({ searchQuery, setSearchQuery, aiLoading, aiMode, requestAI }: any) => (
     <div className="ai-input-container">
         <div className="custom-ai-block">
             <input type="text" id="custom-gen-input" className="custom-ai-input" placeholder="✨ 輸入關鍵字句 或 貼上粉絲留言..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             <div className="custom-btn-group flex gap-2 w-full sm:w-auto">
-                <button className={`btn-custom-ai touch-feedback ${aiLoading ? 'disabled' : ''}`} onClick={() => requestAI('custom')}>AI 生成</button>
-                <button className={`btn-custom-ai touch-feedback ${aiLoading ? 'disabled' : ''}`} onClick={() => requestAI('reply')}>AI 回覆</button>
+                <button 
+                    className={`btn-custom-ai touch-feedback ${aiLoading ? 'disabled' : ''}`} 
+                    onClick={() => requestAI('custom')}
+                >
+                    {aiLoading && aiMode === 'custom' ? '詠唱中...' : 'AI 生成'}
+                </button>
+                <button 
+                    className={`btn-custom-ai touch-feedback ${aiLoading ? 'disabled' : ''}`} 
+                    onClick={() => requestAI('reply')}
+                >
+                    {aiLoading && aiMode === 'reply' ? '思考中...' : 'AI 回覆'}
+                </button>
             </div>
         </div>
     </div>
@@ -132,7 +142,7 @@ export const AiInputPanel = ({ searchQuery, setSearchQuery, aiLoading, requestAI
 export const StatusTips = ({ aiLoading, statusText }: any) => (
     <div className="status-tips-container">
         <div className={`status-indicator ${aiLoading ? 'pulsing' : ''}`}>
-            {aiLoading ? '✨ AI 運算中...' : <span dangerouslySetInnerHTML={{ __html: statusText.startsWith('📍') || statusText.startsWith('🔍') ? statusText : `<span class="status-dot"></span> ${statusText}` }} />}
+            {aiLoading ? statusText : <span dangerouslySetInnerHTML={{ __html: statusText.startsWith('📍') || statusText.startsWith('🔍') ? statusText : `<span class="status-dot"></span> ${statusText}` }} />}
         </div>
         <div className="tips-text-right">💡 點選語句可複製，按鈕可刷新</div>
     </div>
@@ -177,6 +187,7 @@ export const ControlDeck = ({
     setDisplayItems, 
     generateEmoji, 
     aiLoading, 
+    aiMode,
     requestAI, 
     emojiLevel, 
     setEmojiLevel, 
@@ -206,7 +217,7 @@ export const ControlDeck = ({
                 className="btn-emoji-reroll"
             />
             <ActionBtn 
-                label={aiLoading ? "思考中" : "AI 改寫"}
+                label={aiLoading && aiMode === 'rewrite' ? "思考中" : "AI 改寫"}
                 iconPath={ICONS.ai}
                 disabled={displayItems.length === 0 || aiLoading}
                 onClick={() => requestAI('rewrite')}

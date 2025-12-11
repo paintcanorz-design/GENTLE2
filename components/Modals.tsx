@@ -219,7 +219,7 @@ export const WelcomeModal = ({ onClose, database, unlockAchievement }: any) => {
         const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
         const randomEmoji = DEFAULT_FACES[Math.floor(Math.random() * DEFAULT_FACES.length)];
         
-        // Star logic
+        // Star logic - 20% for 5 stars (Gold), 20% for 4 stars (Silver), else 1-3 stars
         const rand = Math.random();
         let stars = 3;
         let frame = "";
@@ -227,7 +227,7 @@ export const WelcomeModal = ({ onClose, database, unlockAchievement }: any) => {
         if (rand < 0.2) {
             stars = 5;
             frame = "gold-frame";
-            if (unlockAchievement) unlockAchievement("five_star_general");
+            if (unlockAchievement) setTimeout(() => unlockAchievement("five_star_general"), 500);
         } else if (rand < 0.4) {
             stars = 4;
             frame = "silver-frame";
@@ -240,7 +240,7 @@ export const WelcomeModal = ({ onClose, database, unlockAchievement }: any) => {
         setStarStr("⭐".repeat(stars));
         setFrameClass(frame);
         setLoaded(true);
-    }, [database, unlockAchievement]);
+    }, [database]); // unlockAchievement excluded to avoid re-run on prop change (function ref usually stable but safer)
 
     if (!loaded) return null;
 
