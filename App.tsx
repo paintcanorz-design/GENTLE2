@@ -12,12 +12,15 @@ export default function App() {
     const [kaomojiList, setKaomojiList] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     
-    // Initialize settings with darkMode logic
+    // Initialize settings
     const [settings, setSettings] = useState<AppSettings>({
         fontSize: 0, resultCount: 6, showCN: true, showSpeak: true, customMin: 3, customMax: 5,
         voiceRate: 1.1, voicePitch: 1.0, copyAction: 'none', userXP: 0, userLevel: 1,
         userTheme: 'default', hideAd: false, totalCopies: 0,
-        darkMode: typeof localStorage !== 'undefined' && localStorage.getItem('theme') === 'dark'
+        // 1. Default to Dark Mode if no preference exists
+        darkMode: typeof localStorage !== 'undefined' && localStorage.getItem('theme') === null 
+            ? true 
+            : localStorage.getItem('theme') === 'dark'
     });
     
     const [history, setHistory] = useState<string[]>([]);
@@ -36,7 +39,11 @@ export default function App() {
     const [currentSub, setCurrentSub] = useState<string | null>(null);
     const [displayItems, setDisplayItems] = useState<DisplayItem[]>([]);
     const [dictExpanded, setDictExpanded] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
+    
+    // 4. Seperate Search and AI Input States
+    const [searchQuery, setSearchQuery] = useState(""); // For Dictionary Search (Bottom)
+    const [aiInputValue, setAiInputValue] = useState(""); // For AI Input (Top)
+
     const [emojiLevel, setEmojiLevel] = useState<number | string>(3);
     const [toastMsg, setToastMsg] = useState<string | null>(null);
     const [statusText, setStatusText] = useState("請選擇預設辭庫或AI生成");
@@ -124,22 +131,29 @@ export default function App() {
                 const s = localStorage.getItem('appSettings');
                 if (s) {
                     const parsed = JSON.parse(s);
-                    // Migration check: if darkMode undefined, fallback to legacy 'theme'
+                    // Migration check: ensure darkMode exists
                     if (parsed.darkMode === undefined) {
-                        parsed.darkMode = localStorage.getItem('theme') === 'dark';
+                        // If migrating from old version, check legacy theme key
+                        parsed.darkMode = localStorage.getItem('theme') !== 'light'; // Default to dark if not explicit light
                     }
                     setSettings(prev => ({ ...prev, ...parsed }));
                 } else {
-                    // Fallback if no appSettings but theme exists
-                    if (localStorage.getItem('theme') === 'dark') {
-                        setSettings(prev => ({ ...prev, darkMode: true }));
-                    }
+                    // 1. Initial Load: Default to Dark Mode if no settings
+                    setSettings(prev => ({ ...prev, darkMode: true }));
                 }
 
+                // 6. Compatibility check for history/favorites
                 const h = localStorage.getItem('historyLog');
-                if (h) setHistory(JSON.parse(h));
+                if (h) {
+                    const parsedH = JSON.parse(h);
+                    if(Array.isArray(parsedH)) setHistory(parsedH);
+                }
                 const f = localStorage.getItem('favorites');
-                if (f) setFavorites(JSON.parse(f));
+                if (f) {
+                    const parsedF = JSON.parse(f);
+                    if(Array.isArray(parsedF)) setFavorites(parsedF);
+                }
+
                 const a = localStorage.getItem('userAchieve');
                 if (a) setUserAchieve(JSON.parse(a));
                 const sub = localStorage.getItem('savedSubCategories');
@@ -155,7 +169,7 @@ export default function App() {
                 const disDecor = localStorage.getItem('disabledDecor');
                 if (disDecor) setDisabledDecor(JSON.parse(disDecor));
 
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Load local data error:", e); }
         };
 
         loadData();
@@ -217,7 +231,7 @@ export default function App() {
         // Apply Dark Mode based on state
         if (settings.darkMode) {
             root.classList.add('dark-mode');
-            localStorage.setItem('theme', 'dark'); // Keep legacy for consistency if needed
+            localStorage.setItem('theme', 'dark'); 
         } else {
             root.classList.remove('dark-mode');
             localStorage.setItem('theme', 'light');
@@ -555,7 +569,7 @@ export default function App() {
             }
             setStatusText(`✨ ${context.sub} + AI 改寫中...`);
         } else {
-            const val = searchQuery.trim();
+            const val = aiInputValue.trim(); // 4. Use aiInputValue here
             if (!val) {
                 showToast(mode === 'reply' ? "⚠️ 請先輸入或貼上要回覆的內容！" : "⚠️ 請先輸入想要生成的關鍵字！");
                 setAiLoading(false);
@@ -602,7 +616,7 @@ export default function App() {
     };
 
     const handleSearch = () => {
-        if (!searchQuery.trim()) return;
+        if (!searchQuery.trim()) return; // 4. Use searchQuery here
         unlockAchievement("first_search");
         const matches: Phrase[] = [];
         Object.values(database).forEach(m => {
@@ -634,7 +648,9 @@ export default function App() {
 
     const importAllData = (file: File) => {
         importData(file, (data) => {
-            if(data.appSettings) setSettings(data.appSettings);
+            // 2. Compatibility check: merge current settings with imported ones to allow default values for new keys
+            if(data.appSettings) setSettings(prev => ({ ...prev, ...data.appSettings }));
+            
             if(data.activeFaces) setActiveFaces(data.activeFaces);
             if(data.activeDecor) setActiveDecor(data.activeDecor);
             if(data.disabledFaces) setDisabledFaces(data.disabledFaces);
@@ -646,10 +662,11 @@ export default function App() {
         });
     };
 
+    // 3. Fix Clear Data: actually clear local storage and reload
     const clearAllData = () => {
-        if(confirm("確定要清除所有資料嗎？")) {
+        if(confirm("確定要清除所有資料嗎？這將重置所有設定、收藏與自訂表符。")) {
             localStorage.clear();
-            window.location.reload();
+            window.location.href = window.location.href; // Force reload
         }
     };
 
@@ -676,8 +693,8 @@ export default function App() {
             />
 
             <AiInputPanel 
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
+                aiInputValue={aiInputValue}
+                setAiInputValue={setAiInputValue}
                 aiLoading={aiLoading}
                 aiMode={aiMode}
                 requestAI={requestAI}

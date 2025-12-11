@@ -117,10 +117,29 @@ export const DictionaryPanel = ({
     </div>
 );
 
-export const AiInputPanel = ({ searchQuery, setSearchQuery, aiLoading, aiMode, requestAI }: any) => (
+export const AiInputPanel = ({ aiInputValue, setAiInputValue, aiLoading, aiMode, requestAI }: any) => (
     <div className="ai-input-container">
         <div className="custom-ai-block">
-            <input type="text" id="custom-gen-input" className="custom-ai-input" placeholder="✨ 輸入關鍵字句 或 貼上粉絲留言..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input 
+                    type="text" 
+                    id="custom-gen-input" 
+                    className="custom-ai-input" 
+                    placeholder="✨ 輸入關鍵字句 或 貼上粉絲留言..." 
+                    value={aiInputValue} 
+                    onChange={(e) => setAiInputValue(e.target.value)}
+                    style={{ paddingRight: '36px' }}
+                />
+                {aiInputValue && (
+                    <div 
+                        className="touch-feedback"
+                        style={{ position: 'absolute', right: '10px', color: 'var(--sub-text)', cursor: 'pointer', padding: '4px' }} 
+                        onClick={() => setAiInputValue('')}
+                    >
+                        <Icon path={ICONS.close} style={{ width: '1em', height: '1em' }} />
+                    </div>
+                )}
+            </div>
             <div className="custom-btn-group flex gap-2 w-full sm:w-auto">
                 <button 
                     className={`btn-custom-ai touch-feedback ${aiLoading ? 'disabled' : ''}`} 
@@ -261,9 +280,28 @@ export const SearchHistoryBlock = ({ setShowHistory, setHistoryTab, setShowAchie
                 <Icon path={ICONS.trophy} /> 成就
             </div>
         </div>
-        <div className="search-box">
-            <input type="text" className="search-input" placeholder="搜尋關鍵字" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} />
-            <button className="search-btn touch-feedback" onClick={handleSearch}>搜尋</button>
+        <div className="search-box" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input 
+                    type="text" 
+                    className="search-input" 
+                    placeholder="搜尋關鍵字" 
+                    value={searchQuery} 
+                    onChange={(e) => setSearchQuery(e.target.value)} 
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    style={{ paddingRight: '36px', width: '100%' }}
+                />
+                {searchQuery && (
+                    <div 
+                        className="touch-feedback"
+                        style={{ position: 'absolute', right: '10px', color: 'var(--text)', opacity: 0.5, cursor: 'pointer', padding: '4px' }} 
+                        onClick={() => setSearchQuery('')}
+                    >
+                        <Icon path={ICONS.close} style={{ width: '1em', height: '1em' }} />
+                    </div>
+                )}
+            </div>
+            <button className="search-btn touch-feedback" onClick={handleSearch} style={{ marginLeft: '8px' }}>搜尋</button>
         </div>
     </div>
 );

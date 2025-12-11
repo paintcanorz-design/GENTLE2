@@ -1,7 +1,7 @@
 import React from 'react';
 
-export const Icon: React.FC<{ path: string, className?: string }> = ({ path, className }) => (
-    <svg className={`icon-svg ui-icon ${className || ''}`} viewBox="0 0 24 24">
+export const Icon: React.FC<{ path: string, className?: string, style?: React.CSSProperties }> = ({ path, className, style }) => (
+    <svg className={`icon-svg ui-icon ${className || ''}`} viewBox="0 0 24 24" style={style}>
         <path d={path} />
     </svg>
 );
