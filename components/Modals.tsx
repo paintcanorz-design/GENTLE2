@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Icon, Switch } from './UI_Components';
 import { ICONS, ACHIEVEMENTS, LEVEL_TITLES, UNLOCKS, DEFAULT_FACES, DEFAULT_DECOR } from '../constants';
@@ -240,7 +241,7 @@ export const WelcomeModal = ({ onClose, database, unlockAchievement }: any) => {
         setStarStr("⭐".repeat(stars));
         setFrameClass(frame);
         setLoaded(true);
-    }, [database]); // unlockAchievement excluded to avoid re-run on prop change (function ref usually stable but safer)
+    }, [database]); 
 
     if (!loaded) return null;
 
@@ -314,18 +315,7 @@ export const SettingsModal = ({
                             <div className="setting-group-header">👀 顯示與外觀</div>
                             <div className="setting-row">
                                 <div className="setting-label">深色模式</div>
-                                <Switch checked={localStorage.getItem('theme') === 'dark'} onChange={(c) => {
-                                    localStorage.setItem('theme', c ? 'dark' : 'light');
-                                    document.documentElement.classList.toggle('dark-mode', c);
-                                }} />
-                            </div>
-                            <div className="setting-row">
-                                <div className="setting-label">減少圖像符號模式</div>
-                                <Switch checked={settings.pureMode} onChange={(c) => setSettings({...settings, pureMode: c})} />
-                            </div>
-                            <div className="setting-row">
-                                <div className="setting-label">隱藏趣味性要素</div>
-                                <Switch checked={settings.hideFun} onChange={(c) => setSettings({...settings, hideFun: c})} />
+                                <Switch checked={settings.darkMode} onChange={(c) => setSettings({...settings, darkMode: c})} />
                             </div>
                             <div className="setting-row">
                                 <div className="setting-label">字體大小</div>

@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Database, AppSettings, Phrase, DisplayItem, SavedSubCategory, UserAchievement } from './types';
 import { SHEET_CSV_URL, KAOMOJI_SHEET_CSV_URL, DEFAULT_FACES, DEFAULT_DECOR, PUNCTUATIONS, LEVEL_TITLES, UNLOCKS, ACHIEVEMENTS, XP_COPY, XP_FAV } from './constants';
-import { stripEmojis, triggerHaptic, createParticles, getWeightedRandom, exportData, importData } from './services/utils';
+import { triggerHaptic, createParticles, getWeightedRandom, exportData, importData } from './services/utils';
 import { Header, DictionaryPanel, AiInputPanel, StatusTips, ResultList, ControlDeck, XPBar, SearchHistoryBlock, Footer } from './components/AppBlocks';
 import { HistoryModal, SettingsModal, AchievementsModal, XPPopover, WelcomeModal, TutorialModal, AchievementDetailModal } from './components/Modals';
 
@@ -10,11 +11,15 @@ export default function App() {
     const [database, setDatabase] = useState<Database>({});
     const [kaomojiList, setKaomojiList] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
+    
+    // Initialize settings with darkMode logic
     const [settings, setSettings] = useState<AppSettings>({
         fontSize: 0, resultCount: 6, showCN: true, showSpeak: true, customMin: 3, customMax: 5,
         voiceRate: 1.1, voicePitch: 1.0, copyAction: 'none', userXP: 0, userLevel: 1,
-        userTheme: 'default', hideAd: false, pureMode: false, hideFun: false, totalCopies: 0
+        userTheme: 'default', hideAd: false, totalCopies: 0,
+        darkMode: typeof localStorage !== 'undefined' && localStorage.getItem('theme') === 'dark'
     });
+    
     const [history, setHistory] = useState<string[]>([]);
     const [favorites, setFavorites] = useState<string[]>([]);
     const [userAchieve, setUserAchieve] = useState<Record<string, UserAchievement>>({});
@@ -91,7 +96,6 @@ export default function App() {
                 const cols = row.split(',');
                 if (cols.length < 4) return;
                 
-                // Keep emojis in keys and content during parsing
                 const mainKey = cols[0].trim().replace(/^"|"$/g, '');
                 const subKey = cols[1].trim().replace(/^"|"$/g, '');
                 const jp = cols[2].trim().replace(/^"|"$/g, '');
@@ -118,7 +122,20 @@ export default function App() {
         const loadLocal = () => {
             try {
                 const s = localStorage.getItem('appSettings');
-                if (s) setSettings(prev => ({ ...prev, ...JSON.parse(s) }));
+                if (s) {
+                    const parsed = JSON.parse(s);
+                    // Migration check: if darkMode undefined, fallback to legacy 'theme'
+                    if (parsed.darkMode === undefined) {
+                        parsed.darkMode = localStorage.getItem('theme') === 'dark';
+                    }
+                    setSettings(prev => ({ ...prev, ...parsed }));
+                } else {
+                    // Fallback if no appSettings but theme exists
+                    if (localStorage.getItem('theme') === 'dark') {
+                        setSettings(prev => ({ ...prev, darkMode: true }));
+                    }
+                }
+
                 const h = localStorage.getItem('historyLog');
                 if (h) setHistory(JSON.parse(h));
                 const f = localStorage.getItem('favorites');
@@ -194,11 +211,20 @@ export default function App() {
     // --- Effect: Apply Settings (Theme, Font, etc) ---
     useEffect(() => {
         const root = document.documentElement;
-        root.classList.remove('dark-mode', 'theme-pink', 'theme-gold', 'theme-mono', 'theme-teal', 'theme-silver', 'theme-purple', 'theme-wine', 'theme-colorful', 'theme-twitter', 'theme-fanbox', 'theme-youtube', 'theme-tech', 'theme-plurk', 'theme-melon', 'theme-orange');
+        // Clean all possible theme classes
+        root.classList.remove('theme-pink', 'theme-gold', 'theme-mono', 'theme-teal', 'theme-silver', 'theme-purple', 'theme-wine', 'theme-colorful', 'theme-twitter', 'theme-fanbox', 'theme-youtube', 'theme-tech', 'theme-plurk', 'theme-melon', 'theme-orange');
         
-        if (settings.userTheme === 'default') {
-            // Default blue
+        // Apply Dark Mode based on state
+        if (settings.darkMode) {
+            root.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark'); // Keep legacy for consistency if needed
         } else {
+            root.classList.remove('dark-mode');
+            localStorage.setItem('theme', 'light');
+        }
+
+        // Apply User Theme
+        if (settings.userTheme !== 'default') {
             root.classList.add(`theme-${settings.userTheme}`);
         }
         
@@ -210,14 +236,7 @@ export default function App() {
         else if (settings.fontSize === 1) { root.style.setProperty('--fs-jp', '0.9rem'); root.style.setProperty('--fs-cn', '0.8rem'); }
         else { root.style.setProperty('--fs-jp', '1.1rem'); root.style.setProperty('--fs-cn', '0.95rem'); }
 
-        if (settings.pureMode) {
-            document.body.classList.add('pure-mode');
-            unlockAchievement("pure_mode");
-        } else {
-            document.body.classList.remove('pure-mode');
-        }
-        
-        if (settings.hideFun) document.body.classList.add('hide-fun'); else document.body.classList.remove('hide-fun');
+        // Manage hiding sections based on settings
         if (!settings.showCN) {
             document.body.classList.add('hide-cn');
             unlockAchievement("n1_japanese");
@@ -248,7 +267,7 @@ export default function App() {
     };
 
     const unlockAchievement = useCallback((id: string) => {
-        if (settings.hideFun || !ACHIEVEMENTS[id]) return;
+        if (!ACHIEVEMENTS[id]) return;
         
         setUserAchieve(prev => {
             if (prev[id]?.unlocked) return prev;
@@ -284,10 +303,9 @@ export default function App() {
                 return current;
             });
         }, 500);
-    }, [settings.hideFun]);
+    }, []);
 
     const checkUnlocks = (level: number) => {
-        if (settings.hideFun) return;
         let msg = "";
         if (level === 20) msg = "✨ 解鎖 🧘 賢者黑白主題！";
         if (level === 100) msg = "🔓 解鎖主題：🍊 愛馬仕橘！";
@@ -297,7 +315,6 @@ export default function App() {
     };
 
     const addXP = (amount: number) => {
-        if (settings.hideFun) return;
         let newXP = settings.userXP + amount;
         let level = 1;
         const getXPForLevel = (lvl: number) => (lvl >= 200 ? 50 : lvl >= 100 ? 20 : 5);
@@ -393,7 +410,7 @@ export default function App() {
     };
 
     const handleCopy = (text: string, e?: React.MouseEvent) => {
-        if (e) createParticles(e.clientX, e.clientY, settings.pureMode);
+        if (e) createParticles(e.clientX, e.clientY);
         
         // Combo Logic
         const now = Date.now();
@@ -650,7 +667,6 @@ export default function App() {
                 currentSub={currentSub}
                 database={database}
                 settings={settings}
-                stripEmojis={stripEmojis}
                 savedSubs={savedSubs}
                 setSavedSubs={setSavedSubs}
                 addXP={addXP}
@@ -777,7 +793,7 @@ export default function App() {
                 />
             )}
 
-            {showWelcome && !settings.hideFun && (
+            {showWelcome && (
                 <WelcomeModal 
                     onClose={() => { setShowWelcome(false); unlockAchievement("read_tutorial"); }}
                     database={database}

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Icon, Switch, CategoryBtn, ActionBtn } from './UI_Components';
 import { ICONS } from '../constants';
@@ -21,7 +22,6 @@ export const DictionaryPanel = ({
     setCurrentSub, 
     database, 
     settings, 
-    stripEmojis, 
     savedSubs, 
     setSavedSubs, 
     addXP, 
@@ -54,11 +54,11 @@ export const DictionaryPanel = ({
                             <CategoryBtn 
                                 key={key} 
                                 active={currentMain === key} 
-                                label={settings.pureMode ? stripEmojis(database[key].label) : database[key].label} 
+                                label={database[key].label} 
                                 onClick={(e) => { 
                                     setCurrentMain(key); 
                                     setCurrentSub(null); 
-                                    createParticles(e.clientX, e.clientY, settings.pureMode);
+                                    createParticles(e.clientX, e.clientY);
                                 }} 
                             />
                         ))}
@@ -89,9 +89,9 @@ export const DictionaryPanel = ({
                             <CategoryBtn 
                                 key={subKey} 
                                 active={currentSub === subKey} 
-                                label={settings.pureMode ? stripEmojis(database[currentMain].subs[subKey].label) : database[currentMain].subs[subKey].label} 
+                                label={database[currentMain].subs[subKey].label} 
                                 onClick={(e) => { 
-                                    createParticles(e.clientX, e.clientY, settings.pureMode);
+                                    createParticles(e.clientX, e.clientY);
                                     setCurrentSub(subKey); 
                                     generatePhrases(currentMain, subKey); 
                                 }} 
@@ -103,7 +103,7 @@ export const DictionaryPanel = ({
                                 active={currentSub === s.sub}
                                 label={s.label}
                                 onClick={(e) => {
-                                    createParticles(e.clientX, e.clientY, settings.pureMode);
+                                    createParticles(e.clientX, e.clientY);
                                     setCurrentSub(s.sub);
                                     generatePhrases(s.main, s.sub);
                                 }}
@@ -202,7 +202,7 @@ export const ControlDeck = ({
                 disabled={displayItems.length === 0 || aiLoading}
                 onClick={(e) => {
                     if(currentMain && currentSub) generatePhrases(currentMain, currentSub, true);
-                    createParticles(e.clientX, e.clientY, settings.pureMode);
+                    createParticles(e.clientX, e.clientY);
                 }}
                 className="btn-regen"
             />
@@ -212,7 +212,7 @@ export const ControlDeck = ({
                 disabled={displayItems.length === 0}
                 onClick={(e) => {
                     setDisplayItems((prev: any) => prev.map((item: any) => ({ ...item, emoji: generateEmoji() })));
-                    createParticles(e.clientX, e.clientY, settings.pureMode);
+                    createParticles(e.clientX, e.clientY);
                 }}
                 className="btn-emoji-reroll"
             />

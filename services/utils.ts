@@ -1,3 +1,4 @@
+
 export const stripEmojis = (str: string): string => {
     if (!str) return "";
     return str.replace(/[^\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF\uFF00-\uFFEF\u0020-\u007E\u00A0-\u00FF\u3000-\u303F]/g, '').replace(/\s+/g, ' ').trim();
@@ -7,8 +8,7 @@ export const triggerHaptic = (duration = 10) => {
     if (navigator.vibrate) navigator.vibrate(duration);
 };
 
-export const createParticles = (x: number, y: number, pureMode: boolean) => {
-    if (pureMode) return;
+export const createParticles = (x: number, y: number) => {
     const particles = ['❤️', '⭐', '✨', '💕'];
     for (let i = 0; i < 12; i++) {
         const p = document.createElement('div');

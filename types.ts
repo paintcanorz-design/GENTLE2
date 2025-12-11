@@ -1,3 +1,4 @@
+
 export interface Phrase {
   jp: string;
   cn: string;
@@ -31,8 +32,7 @@ export interface AppSettings {
   userLevel: number;
   userTheme: string;
   hideAd: boolean;
-  pureMode: boolean;
-  hideFun: boolean;
+  darkMode: boolean; 
   totalCopies: number;
 }
 
@@ -52,7 +52,7 @@ export interface DisplayItem {
   base: Phrase;
   emoji: string;
   specificPos: number;
-  isUpgraded?: boolean; // Added for AI visual effect
+  isUpgraded?: boolean;
 }
 
 export interface SavedSubCategory {
