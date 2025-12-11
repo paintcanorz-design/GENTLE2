@@ -48,9 +48,19 @@ export default function App() {
     const [settingsTab, setSettingsTab] = useState<'general' | 'theme' | 'emoji' | 'data'>('general');
     const [historyTab, setHistoryTab] = useState<'history' | 'fav'>('history');
 
+    // Logic Refs
     const seenIndices = useRef<Set<number>>(new Set());
     const aiStartTime = useRef<number>(0);
     const aiCount = useRef<number>(0);
+    
+    // Achievement Refs
+    const lastCopyTime = useRef<number>(0);
+    const comboCount = useRef<number>(0);
+    const voiceClickCount = useRef<number>(0);
+    const regenStreak = useRef<number>(0);
+    const eroticStreak = useRef<number>(0);
+    const cuteStreak = useRef<number>(0);
+    const themeCount = useRef<Set<string>>(new Set());
 
     // --- Data Fetching ---
     useEffect(() => {
@@ -78,10 +88,16 @@ export default function App() {
                 if (!row.trim()) return;
                 const cols = row.split(',');
                 if (cols.length < 4) return;
-                const mainKey = stripEmojis(cols[0].trim().replace(/^"|"$/g, ''));
-                const subKey = stripEmojis(cols[1].trim().replace(/^"|"$/g, ''));
-                const jp = stripEmojis(cols[2].trim().replace(/^"|"$/g, ''));
-                const cn = stripEmojis(cols[3].trim().replace(/^"|"$/g, ''));
+                
+                // Keep emojis in keys and content during parsing
+                // They will be stripped only when rendering UI in Pure Mode
+                const mainKey = cols[0].trim().replace(/^"|"$/g, '');
+                const subKey = cols[1].trim().replace(/^"|"$/g, '');
+                
+                // Do NOT use stripEmojis here, we want to keep them in the DB
+                const jp = cols[2].trim().replace(/^"|"$/g, '');
+                const cn = cols[3].trim().replace(/^"|"$/g, '');
+                
                 if (!mainKey || !subKey) return;
                 if (!db[mainKey]) db[mainKey] = { label: mainKey, subs: {} };
                 if (!db[mainKey].subs[subKey]) db[mainKey].subs[subKey] = { label: subKey, phrases: [] };
@@ -142,14 +158,29 @@ export default function App() {
             root.classList.add(`theme-${settings.userTheme}`);
         }
         
+        themeCount.current.add(settings.userTheme);
+        if (themeCount.current.size >= 3) unlockAchievement("color_master");
+        
         // Font Size
         if (settings.fontSize === 0) { root.style.setProperty('--fs-jp', '0.8rem'); root.style.setProperty('--fs-cn', '0.75rem'); }
         else if (settings.fontSize === 1) { root.style.setProperty('--fs-jp', '0.9rem'); root.style.setProperty('--fs-cn', '0.8rem'); }
         else { root.style.setProperty('--fs-jp', '1.1rem'); root.style.setProperty('--fs-cn', '0.95rem'); }
 
-        if (settings.pureMode) document.body.classList.add('pure-mode'); else document.body.classList.remove('pure-mode');
+        if (settings.pureMode) {
+            document.body.classList.add('pure-mode');
+            unlockAchievement("pure_mode");
+        } else {
+            document.body.classList.remove('pure-mode');
+        }
+        
         if (settings.hideFun) document.body.classList.add('hide-fun'); else document.body.classList.remove('hide-fun');
-        if (!settings.showCN) document.body.classList.add('hide-cn'); else document.body.classList.remove('hide-cn');
+        if (!settings.showCN) {
+            document.body.classList.add('hide-cn');
+            unlockAchievement("n1_japanese");
+        } else {
+            document.body.classList.remove('hide-cn');
+        }
+        
         if (!settings.showSpeak) document.body.classList.add('hide-speak'); else document.body.classList.remove('hide-speak');
 
         // Persist
@@ -174,20 +205,54 @@ export default function App() {
 
     const unlockAchievement = useCallback((id: string) => {
         if (settings.hideFun || !ACHIEVEMENTS[id]) return;
-        if (userAchieve[id]?.unlocked) return;
         
-        const newAchieve = { ...userAchieve, [id]: { unlocked: true, date: Date.now() } };
-        setUserAchieve(newAchieve);
+        setUserAchieve(prev => {
+            if (prev[id]?.unlocked) return prev;
+            
+            const newAchieve = { ...prev, [id]: { unlocked: true, date: Date.now() } };
+            
+            // Show toast
+            const t = document.getElementById('achieve-toast');
+            if (t) {
+                const iconEl = t.querySelector('.achieve-toast-icon');
+                if (iconEl) iconEl.innerHTML = ACHIEVEMENTS[id].icon;
+                const titleEl = t.querySelector('.achieve-toast-title');
+                if (titleEl) titleEl.textContent = "成就解鎖！";
+                const descEl = t.querySelector('.achieve-toast-desc');
+                if (descEl) descEl.textContent = ACHIEVEMENTS[id].title;
+                
+                t.classList.add('show');
+                triggerHaptic(200);
+                setTimeout(() => t.classList.remove('show'), 3000);
+            }
+            return newAchieve;
+        });
         
-        const t = document.getElementById('achieve-toast');
-        if (t) {
-            t.querySelector('.achieve-toast-icon')!.innerHTML = ACHIEVEMENTS[id].icon;
-            t.querySelector('.achieve-toast-desc')!.textContent = ACHIEVEMENTS[id].title;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
+        // Check for all_complete (Delayed to avoid state race conditions)
+        setTimeout(() => {
+            setUserAchieve(current => {
+                const allKeys = Object.keys(ACHIEVEMENTS).filter(k => k !== 'all_complete');
+                const unlockedCount = allKeys.filter(k => current[k]?.unlocked).length;
+                if (unlockedCount === allKeys.length && !current['all_complete']?.unlocked) {
+                    const finalAchieve = { ...current, ['all_complete']: { unlocked: true, date: Date.now() } };
+                    // We need to show toast for this too, but for simplicity, the next render or manual trigger would be safer
+                    // Here we just update state silently or could duplicate toast logic
+                    return finalAchieve;
+                }
+                return current;
+            });
+        }, 500);
+    }, [settings.hideFun]);
+
+    const checkUnlocks = (level: number) => {
+        if (settings.hideFun) return;
+        let msg = "";
+        if (level === 20) msg = "✨ 解鎖 🧘 賢者黑白主題！";
+        if (level === 100) msg = "🔓 解鎖主題：🍊 愛馬仕橘！";
+        if (msg) {
+            setTimeout(() => alert(`恭喜升級到 LV.${level}！\n${msg}\n請到設定頁面查看。`), 500);
         }
-        triggerHaptic(200);
-    }, [settings.hideFun, userAchieve]);
+    };
 
     const addXP = (amount: number) => {
         if (settings.hideFun) return;
@@ -207,6 +272,7 @@ export default function App() {
                 setTimeout(() => toast.className = toast.className.replace("show", ""), 2000);
             }
             triggerHaptic(100);
+            checkUnlocks(level);
             if (level >= 50) unlockAchievement("level_50");
             if (level >= 100) unlockAchievement("level_100");
         }
@@ -244,6 +310,28 @@ export default function App() {
     const generatePhrases = (mainKey: string, subKey: string, isRefresh = false) => {
         if (!database[mainKey]?.subs[subKey]) return;
         
+        // Streak Logic
+        if (isRefresh) {
+            regenStreak.current += 1;
+            if (regenStreak.current >= 20) unlockAchievement("regen_20");
+        } else {
+            regenStreak.current = 0;
+        }
+
+        if (subKey.includes("紳士讚美") || subKey.includes("🔞")) {
+            eroticStreak.current += 1;
+            if (eroticStreak.current >= 10) unlockAchievement("erotic_fan");
+        } else {
+            eroticStreak.current = 0;
+        }
+
+        if (subKey.includes("單純可愛") || subKey.includes("🥰")) {
+            cuteStreak.current += 1;
+            if (cuteStreak.current >= 10) unlockAchievement("pure_love");
+        } else {
+            cuteStreak.current = 0;
+        }
+
         const phrases = database[mainKey].subs[subKey].phrases;
         const count = Math.min(phrases.length, settings.resultCount);
         
@@ -265,6 +353,16 @@ export default function App() {
     const handleCopy = (text: string, e?: React.MouseEvent) => {
         if (e) createParticles(e.clientX, e.clientY, settings.pureMode);
         
+        // Combo Logic
+        const now = Date.now();
+        if (now - lastCopyTime.current < 10000) {
+            comboCount.current += 1;
+            if (comboCount.current >= 5) unlockAchievement("combo_master");
+        } else {
+            comboCount.current = 1;
+        }
+        lastCopyTime.current = now;
+
         setHistory(prev => {
             const n = [text, ...prev.filter(x => x !== text)];
             if (n.length > 16) n.pop();
@@ -309,6 +407,9 @@ export default function App() {
 
     const speakText = (text: string, e?: React.MouseEvent) => {
         if(e) e.stopPropagation();
+        voiceClickCount.current += 1;
+        if (voiceClickCount.current >= 10) unlockAchievement("voice_lover");
+        
         const clean = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
         const u = new SpeechSynthesisUtterance(clean);
         u.lang = 'ja-JP';
@@ -340,6 +441,7 @@ export default function App() {
                 if (!activeDecor.includes(emoji)) setActiveDecor(prev => [...prev, emoji]);
             }
         }
+        unlockAchievement("custom_emoji");
     };
 
     const updateCustomMix = (type: 'min' | 'max', val: number) => {
@@ -613,6 +715,7 @@ export default function App() {
                 <WelcomeModal 
                     onClose={() => { setShowWelcome(false); unlockAchievement("read_tutorial"); }}
                     database={database}
+                    unlockAchievement={unlockAchievement}
                 />
             )}
 
