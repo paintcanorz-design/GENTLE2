@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const Icon: React.FC<{ path: string, className?: string }> = ({ path, className }) => (
-    <svg className={`icon-svg ${className || ''}`} viewBox="0 0 24 24">
+    <svg className={`icon-svg ui-icon ${className || ''}`} viewBox="0 0 24 24">
         <path d={path} />
     </svg>
 );
@@ -23,7 +23,7 @@ export const CategoryBtn: React.FC<{ active: boolean, label: string, onClick: (e
 );
 
 export const ActionBtn: React.FC<{ 
-    label: string, 
+    label: React.ReactNode, 
     iconPath: string, 
     disabled?: boolean, 
     onClick: (e: React.MouseEvent) => void,

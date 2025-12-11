@@ -255,6 +255,10 @@ export const SettingsModal = ({
     setActiveFaces, 
     activeDecor, 
     setActiveDecor, 
+    disabledFaces, 
+    disabledDecor,
+    toggleEmojiStatus,
+    updateCustomMix,
     exportAllData, 
     importAllData, 
     clearAllData,
@@ -374,42 +378,60 @@ export const SettingsModal = ({
                             <div className="setting-group-header">🎨 自訂數量</div>
                             <div className="setting-row">
                                 <div className="setting-label">最少幾個？</div>
-                                <div className="setting-control"><input type="range" min="1" max="10" value={settings.customMin} onChange={(e) => setSettings({...settings, customMin: parseInt(e.target.value)})} /><span className="slider-val-display">{settings.customMin}</span></div>
+                                <div className="setting-control"><input type="range" min="1" max="10" value={settings.customMin} onChange={(e) => updateCustomMix('min', parseInt(e.target.value))} /><span className="slider-val-display">{settings.customMin}</span></div>
                             </div>
                             <div className="setting-row">
                                 <div className="setting-label">最多幾個？</div>
-                                <div className="setting-control"><input type="range" min="1" max="10" value={settings.customMax} onChange={(e) => setSettings({...settings, customMax: parseInt(e.target.value)})} /><span className="slider-val-display">{settings.customMax}</span></div>
+                                <div className="setting-control"><input type="range" min="1" max="10" value={settings.customMax} onChange={(e) => updateCustomMix('max', parseInt(e.target.value))} /><span className="slider-val-display">{settings.customMax}</span></div>
                             </div>
                         </div>
+                        
                         <div className="setting-group">
-                            <div className="setting-group-header">🙂 臉部表符 (點擊停用)</div>
+                            <div className="setting-group-header">🙂 臉部表符 (點擊以停用/啟用)</div>
+                            <div className="emoji-input-group">
+                                <input type="text" id="new-face-input" className="emoji-input" placeholder="貼上或輸入新表符..." />
+                                <button className="emoji-add-btn touch-feedback" onClick={() => {
+                                    const input = document.getElementById('new-face-input') as HTMLInputElement;
+                                    const val = input.value.trim();
+                                    if(val) { toggleEmojiStatus(val, false, 'face'); input.value = ''; }
+                                }}>新增</button>
+                            </div>
                             <div className="emoji-grid">
                                 {activeFaces.map((emoji: string) => (
-                                    <div key={emoji} className="emoji-chip" onClick={() => setActiveFaces(activeFaces.filter((e:string) => e !== emoji))}>{emoji}</div>
+                                    <div key={emoji} className="emoji-chip" onClick={() => toggleEmojiStatus(emoji, true, 'face')}>{emoji}</div>
                                 ))}
-                                <div className="emoji-chip" style={{background: 'var(--primary)', color: 'white'}} onClick={() => {
-                                    const e = prompt("輸入新表符");
-                                    if(e) setActiveFaces([...activeFaces, e]);
-                                }}>+</div>
+                                {disabledFaces.map((emoji: string) => (
+                                    <div key={emoji} className="emoji-chip disabled" onClick={() => toggleEmojiStatus(emoji, false, 'face')}>{emoji}</div>
+                                ))}
                             </div>
                         </div>
+
                         <div className="setting-group">
-                            <div className="setting-group-header">✨ 裝飾符號 (點擊停用)</div>
+                            <div className="setting-group-header">✨ 裝飾符號 (點擊以停用/啟用)</div>
+                            <div className="emoji-input-group">
+                                <input type="text" id="new-decor-input" className="emoji-input" placeholder="貼上或輸入新符號..." />
+                                <button className="emoji-add-btn touch-feedback" onClick={() => {
+                                    const input = document.getElementById('new-decor-input') as HTMLInputElement;
+                                    const val = input.value.trim();
+                                    if(val) { toggleEmojiStatus(val, false, 'decor'); input.value = ''; }
+                                }}>新增</button>
+                            </div>
                             <div className="emoji-grid">
                                 {activeDecor.map((emoji: string) => (
-                                    <div key={emoji} className="emoji-chip" onClick={() => setActiveDecor(activeDecor.filter((e:string) => e !== emoji))}>{emoji}</div>
+                                    <div key={emoji} className="emoji-chip" onClick={() => toggleEmojiStatus(emoji, true, 'decor')}>{emoji}</div>
                                 ))}
-                                <div className="emoji-chip" style={{background: 'var(--primary)', color: 'white'}} onClick={() => {
-                                    const e = prompt("輸入新符號");
-                                    if(e) setActiveDecor([...activeDecor, e]);
-                                }}>+</div>
+                                {disabledDecor.map((emoji: string) => (
+                                    <div key={emoji} className="emoji-chip disabled" onClick={() => toggleEmojiStatus(emoji, false, 'decor')}>{emoji}</div>
+                                ))}
                             </div>
                         </div>
+
                         <div style={{textAlign: 'center', marginBottom: '12px'}}>
                             <button className="clear-btn touch-feedback" style={{width:'auto', padding:'8px 16px', fontSize:'0.8rem'}} onClick={() => {
-                                if(confirm("恢復預設？")) {
+                                if(confirm("確定要恢復預設的表情符號列表嗎？")) {
                                     setActiveFaces(DEFAULT_FACES);
                                     setActiveDecor(DEFAULT_DECOR);
+                                    // Reset disabled lists if implemented
                                 }
                             }}>🔄 恢復預設表符列表</button>
                         </div>

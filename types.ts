@@ -52,6 +52,7 @@ export interface DisplayItem {
   base: Phrase;
   emoji: string;
   specificPos: number;
+  isUpgraded?: boolean; // Added for AI visual effect
 }
 
 export interface SavedSubCategory {

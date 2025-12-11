@@ -19,8 +19,12 @@ export default function App() {
     const [favorites, setFavorites] = useState<string[]>([]);
     const [userAchieve, setUserAchieve] = useState<Record<string, UserAchievement>>({});
     const [savedSubs, setSavedSubs] = useState<SavedSubCategory[]>([]);
+    
+    // Emoji Lists
     const [activeFaces, setActiveFaces] = useState<string[]>(DEFAULT_FACES);
+    const [disabledFaces, setDisabledFaces] = useState<string[]>([]);
     const [activeDecor, setActiveDecor] = useState<string[]>(DEFAULT_DECOR);
+    const [disabledDecor, setDisabledDecor] = useState<string[]>([]);
     
     // UI State
     const [currentMain, setCurrentMain] = useState<string | null>(null);
@@ -108,10 +112,17 @@ export default function App() {
                 if (a) setUserAchieve(JSON.parse(a));
                 const sub = localStorage.getItem('savedSubCategories');
                 if (sub) setSavedSubs(JSON.parse(sub));
+                
                 const faces = localStorage.getItem('customFaces');
                 if (faces) setActiveFaces(JSON.parse(faces));
+                const disFaces = localStorage.getItem('disabledFaces');
+                if (disFaces) setDisabledFaces(JSON.parse(disFaces));
+                
                 const decor = localStorage.getItem('customDecor');
                 if (decor) setActiveDecor(JSON.parse(decor));
+                const disDecor = localStorage.getItem('disabledDecor');
+                if (disDecor) setDisabledDecor(JSON.parse(disDecor));
+
             } catch (e) { console.error(e); }
         };
 
@@ -147,10 +158,13 @@ export default function App() {
         localStorage.setItem('historyLog', JSON.stringify(history));
         localStorage.setItem('userAchieve', JSON.stringify(userAchieve));
         localStorage.setItem('savedSubCategories', JSON.stringify(savedSubs));
+        
         localStorage.setItem('customFaces', JSON.stringify(activeFaces));
+        localStorage.setItem('disabledFaces', JSON.stringify(disabledFaces));
         localStorage.setItem('customDecor', JSON.stringify(activeDecor));
+        localStorage.setItem('disabledDecor', JSON.stringify(disabledDecor));
 
-    }, [settings, favorites, history, userAchieve, savedSubs, activeFaces, activeDecor]);
+    }, [settings, favorites, history, userAchieve, savedSubs, activeFaces, disabledFaces, activeDecor, disabledDecor]);
 
     // --- Logic ---
     const showToast = (msg: string) => {
@@ -305,11 +319,51 @@ export default function App() {
         if (settings.voiceRate >= 1.5) unlockAchievement("rap_god");
     };
 
+    const toggleEmojiStatus = (emoji: string, isActive: boolean, type: 'face' | 'decor') => {
+        triggerHaptic(10);
+        if (type === 'face') {
+            if (isActive) {
+                // Moving from Active to Disabled
+                setActiveFaces(prev => prev.filter(e => e !== emoji));
+                if (!disabledFaces.includes(emoji)) setDisabledFaces(prev => [...prev, emoji]);
+            } else {
+                // Moving from Disabled to Active, OR adding new
+                setDisabledFaces(prev => prev.filter(e => e !== emoji));
+                if (!activeFaces.includes(emoji)) setActiveFaces(prev => [...prev, emoji]);
+            }
+        } else {
+            if (isActive) {
+                setActiveDecor(prev => prev.filter(e => e !== emoji));
+                if (!disabledDecor.includes(emoji)) setDisabledDecor(prev => [...prev, emoji]);
+            } else {
+                setDisabledDecor(prev => prev.filter(e => e !== emoji));
+                if (!activeDecor.includes(emoji)) setActiveDecor(prev => [...prev, emoji]);
+            }
+        }
+    };
+
+    const updateCustomMix = (type: 'min' | 'max', val: number) => {
+        val = Math.max(1, Math.min(10, val));
+        if (type === 'min') {
+            if (val > settings.customMax) {
+                setSettings({ ...settings, customMin: val, customMax: val });
+            } else {
+                setSettings({ ...settings, customMin: val });
+            }
+        } else {
+            if (val < settings.customMin) {
+                setSettings({ ...settings, customMax: val, customMin: val });
+            } else {
+                setSettings({ ...settings, customMax: val });
+            }
+        }
+    };
+
     const requestAI = (mode: 'custom' | 'reply' | 'rewrite') => {
         const now = Date.now();
         if (now - aiStartTime.current > 60000) { aiCount.current = 0; aiStartTime.current = now; }
         if (aiCount.current === 0) aiStartTime.current = now;
-        if (aiCount.current >= 3) {
+        if (aiCount.current >= 5) {
             showToast("⏳ 系統忙碌中，請稍後再試");
             return;
         }
@@ -321,7 +375,13 @@ export default function App() {
             setTimeout(() => {
                 setDisplayItems(prev => prev.map(item => ({
                     ...item,
-                    base: { ...item.base, jp: item.base.jp + " (AI Optimized)" }
+                    base: { 
+                        ...item.base, 
+                        jp: item.base.jp + " (AI優化)",
+                        cn: item.base.cn + " (AI優化)"
+                    },
+                    emoji: generateEmoji(),
+                    isUpgraded: true // Added flag for visual effect
                 })));
                 setAiLoading(false);
                 setStatusText("✅ AI 生成完成");
@@ -330,17 +390,29 @@ export default function App() {
             }, 2000);
         } else {
             const seed = (document.getElementById('custom-gen-input') as HTMLInputElement)?.value || "Love";
+            if (!seed.trim()) {
+                showToast("⚠️ 請先輸入關鍵字");
+                setAiLoading(false);
+                return;
+            }
+            
+            setStatusText(mode === 'reply' ? '✨ 回覆生成中...' : '✨ 關鍵語句生成中...');
+            
             setTimeout(() => {
                 const newItems = Array(settings.resultCount).fill(0).map((_, i) => ({
-                    base: { jp: `${seed} generated ${i}`, cn: "AI 生成內容" },
+                    base: { 
+                        jp: mode === 'reply' ? `對「${seed}」的回覆 ${i+1}` : `關於「${seed}」的讚美 ${i+1}`, 
+                        cn: "AI 生成內容範例" 
+                    },
                     emoji: generateEmoji(),
-                    specificPos: 1
+                    specificPos: 1,
+                    isUpgraded: true
                 }));
                 setDisplayItems(newItems);
                 setAiLoading(false);
                 setStatusText("✅ AI 生成完成");
                 setCurrentMain('Custom');
-                setCurrentSub(mode);
+                setCurrentSub(mode === 'reply' ? 'AI Reply' : 'AI Custom');
                 unlockAchievement("ai_awakening");
             }, 2000);
         }
@@ -373,7 +445,7 @@ export default function App() {
     const toggleDict = (forceState?: boolean) => setDictExpanded(typeof forceState === 'boolean' ? forceState : !dictExpanded);
 
     const exportAllData = () => {
-        const data = { appSettings: settings, activeFaces, activeDecor, savedSubCategories: savedSubs, favorites, userAchieve };
+        const data = { appSettings: settings, activeFaces, activeDecor, savedSubCategories: savedSubs, favorites, userAchieve, disabledFaces, disabledDecor };
         exportData(data, "gentleman_settings.json");
     };
 
@@ -382,6 +454,8 @@ export default function App() {
             if(data.appSettings) setSettings(data.appSettings);
             if(data.activeFaces) setActiveFaces(data.activeFaces);
             if(data.activeDecor) setActiveDecor(data.activeDecor);
+            if(data.disabledFaces) setDisabledFaces(data.disabledFaces);
+            if(data.disabledDecor) setDisabledDecor(data.disabledDecor);
             if(data.savedSubCategories) setSavedSubs(data.savedSubCategories);
             if(data.favorites) setFavorites(data.favorites);
             if(data.userAchieve) setUserAchieve(data.userAchieve);
@@ -482,6 +556,10 @@ export default function App() {
                     setActiveFaces={setActiveFaces}
                     activeDecor={activeDecor}
                     setActiveDecor={setActiveDecor}
+                    disabledFaces={disabledFaces}
+                    disabledDecor={disabledDecor}
+                    toggleEmojiStatus={toggleEmojiStatus}
+                    updateCustomMix={updateCustomMix}
                     exportAllData={exportAllData}
                     importAllData={importAllData}
                     clearAllData={clearAllData}

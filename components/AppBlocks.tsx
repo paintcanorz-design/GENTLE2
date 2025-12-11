@@ -147,8 +147,8 @@ export const ResultList = ({ displayItems, handleCopy, speakText, toggleFavorite
             </div>
         ) : (
             displayItems.map((item: any, idx: number) => (
-                <div key={idx} className="result-item animate-in" style={{ animationDelay: `${idx * 0.05}s` }}>
-                    <div className="result-left" onClick={(e) => handleCopy(item.base.jp + item.emoji, e)}>
+                <div key={idx} className={`result-item animate-in ${item.isUpgraded ? 'ai-upgraded' : ''}`} style={{ animationDelay: `${idx * 0.05}s` }}>
+                    <div className={`result-left ${item.isUpgraded ? 'text-upgraded' : ''}`} onClick={(e) => handleCopy(item.base.jp + item.emoji, e)}>
                         {item.base.jp + item.emoji}
                     </div>
                     <div className="result-actions">
@@ -160,7 +160,7 @@ export const ResultList = ({ displayItems, handleCopy, speakText, toggleFavorite
                         </div>
                     </div>
                     {!settings.showCN ? null : (
-                        <div className="result-right">{item.base.cn}</div>
+                        <div className={`result-right ${item.isUpgraded ? 'text-upgraded' : ''}`}>{item.base.cn}</div>
                     )}
                 </div>
             ))
@@ -188,7 +188,7 @@ export const ControlDeck = ({
             <ActionBtn 
                 label="換一批" 
                 iconPath={ICONS.regen} 
-                disabled={displayItems.length === 0}
+                disabled={displayItems.length === 0 || aiLoading}
                 onClick={(e) => {
                     if(currentMain && currentSub) generatePhrases(currentMain, currentSub, true);
                     createParticles(e.clientX, e.clientY, settings.pureMode);
