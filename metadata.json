@@ -1,0 +1,5 @@
+{
+  "name": "Gentleman AI Praise Generator",
+  "description": "A React port of the Gentleman AI Praise Generator, featuring dictionary-based phrase generation, custom AI inputs, gamification elements, and theming.",
+  "requestFramePermissions": []
+}
