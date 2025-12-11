@@ -105,7 +105,7 @@ export const AchievementsModal = ({ onClose, userAchieve, showDetail }: any) => 
     return (
         <ModalWrapper onClose={onClose} id="achieve-modal" contentId="achieve-content-box">
             <div className="modal-header">
-                <div className="modal-title">🏆 成就徽章</div>
+                <div className="modal-title"><Icon path={ICONS.trophy} style={{marginRight:'6px'}} /> 成就徽章</div>
                 <div className="close-x touch-feedback" onClick={onClose}>×</div>
             </div>
             <div className="history-list" style={{ gap: '8px' }}>
@@ -157,7 +157,7 @@ export const AchievementDetailModal = ({ onClose, achievement, userAchieveData }
                     </div>
                 </div>
                 <div className="welcome-actions" style={{ borderRadius: '0 0 20px 20px' }}>
-                    <button className="welcome-btn btn-dl-img touch-feedback" onClick={() => saveElementAsImage('achieve-capture-target', `achievement_${Date.now()}.png`)}>📥 存圖紀念</button>
+                    <button className="welcome-btn btn-dl-img touch-feedback" onClick={() => saveElementAsImage('achieve-capture-target', `achievement_${Date.now()}.png`)}><Icon path={ICONS.export} style={{marginRight:'4px'}} /> 存圖紀念</button>
                     <button className="welcome-btn btn-start touch-feedback" onClick={onClose}>❌ 關閉</button>
                 </div>
             </div>
@@ -267,8 +267,8 @@ export const WelcomeModal = ({ onClose, database, unlockAchievement }: any) => {
                     <button className="welcome-btn btn-dl-img touch-feedback" onClick={() => {
                         saveElementAsImage('capture-target', `gentleman_card_${Date.now()}.jpg`);
                         if(unlockAchievement) unlockAchievement("download_card");
-                    }}>📥 存圖</button>
-                    <button className="welcome-btn btn-copy-txt touch-feedback" onClick={copyText}>📋 複製</button>
+                    }}><Icon path={ICONS.export} style={{marginRight:'4px'}} /> 存圖</button>
+                    <button className="welcome-btn btn-copy-txt touch-feedback" onClick={copyText}><Icon path={ICONS.save} style={{marginRight:'4px'}} /> 複製</button>
                     <button className="welcome-btn btn-start touch-feedback" onClick={onClose}>🚀 開始</button>
                 </div>
             </div>
@@ -303,19 +303,27 @@ export const SettingsModal = ({
             <div className="modal-header"><div className="modal-title">⚙️ 詳細設定</div><div className="close-x touch-feedback" onClick={onClose}>×</div></div>
             <div className="tab-group">
                 <div className={`tab-btn touch-feedback ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}><Icon path={ICONS.settings} /> 一般</div>
-                <div className={`tab-btn touch-feedback ${activeTab === 'theme' ? 'active' : ''}`} onClick={() => setActiveTab('theme')}><Icon path={ICONS.star} /> 外觀</div>
+                <div className={`tab-btn touch-feedback ${activeTab === 'theme' ? 'active' : ''}`} onClick={() => setActiveTab('theme')}><Icon path={ICONS.theme} /> 外觀</div>
                 <div className={`tab-btn touch-feedback ${activeTab === 'emoji' ? 'active' : ''}`} onClick={() => setActiveTab('emoji')}><Icon path={ICONS.emojiReroll} /> 表符</div>
-                <div className={`tab-btn touch-feedback ${activeTab === 'data' ? 'active' : ''}`} onClick={() => setActiveTab('data')}><Icon path={ICONS.dict} /> 資料</div>
+                <div className={`tab-btn touch-feedback ${activeTab === 'data' ? 'active' : ''}`} onClick={() => setActiveTab('data')}><Icon path={ICONS.save} /> 資料</div>
             </div>
 
             <div style={{ flex: 1, overflowY: 'auto', paddingRight: '5px' }}>
                 {activeTab === 'general' && (
                     <>
                         <div className="setting-group">
-                            <div className="setting-group-header">👀 顯示與外觀</div>
+                            <div className="setting-group-header"><Icon path={ICONS.appearance} style={{marginRight:'6px'}} /> 顯示與外觀</div>
                             <div className="setting-row">
                                 <div className="setting-label">深色模式</div>
                                 <Switch checked={settings.darkMode} onChange={(c) => setSettings({...settings, darkMode: c})} />
+                            </div>
+                            <div className="setting-row">
+                                <div className="setting-label">減少圖像符號模式</div>
+                                <Switch checked={settings.pureMode} onChange={(c) => setSettings({...settings, pureMode: c})} />
+                            </div>
+                            <div className="setting-row">
+                                <div className="setting-label">隱藏趣味性要素</div>
+                                <Switch checked={settings.hideAd} onChange={(c) => setSettings({...settings, hideAd: c})} />
                             </div>
                             <div className="setting-row">
                                 <div className="setting-label">字體大小</div>
@@ -340,7 +348,7 @@ export const SettingsModal = ({
                             </div>
                         </div>
                         <div className="setting-group">
-                            <div className="setting-group-header">🗣️ 語音設定 (TTS)</div>
+                            <div className="setting-group-header"><Icon path={ICONS.voice} style={{marginRight:'6px'}} /> 語音設定 (TTS)</div>
                             <div className="setting-row">
                                 <div className="setting-label">顯示發聲按鈕</div>
                                 <Switch checked={settings.showSpeak} onChange={(c) => setSettings({...settings, showSpeak: c})} />
@@ -354,7 +362,7 @@ export const SettingsModal = ({
                                 <div className="setting-control"><input type="range" min="0.5" max="1.5" step="0.1" value={settings.voicePitch} onChange={(e) => setSettings({...settings, voicePitch: parseFloat(e.target.value)})} /></div>
                             </div>
                             <div className="setting-row" style={{ justifyContent: 'center' }}>
-                                <button className="font-btn touch-feedback" onClick={testVoice}>🔊 試聽語音</button>
+                                <button className="font-btn touch-feedback" onClick={testVoice}><Icon path={ICONS.speak} style={{marginRight:'4px'}} /> 試聽語音</button>
                             </div>
                         </div>
                     </>
@@ -362,13 +370,13 @@ export const SettingsModal = ({
 
                 {activeTab === 'theme' && (
                     <div className="setting-group">
-                        <div className="setting-group-header">🏆 紳士成就與外觀</div>
+                        <div className="setting-group-header"><Icon path={ICONS.trophy} style={{marginRight:'6px'}} /> 紳士成就與外觀</div>
                         <div className="setting-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
                             <div className="setting-label">介面主題 (需等級解鎖)</div>
                             <div className="theme-grid" style={{ width: '100%' }}>
                                 <button className={`theme-btn touch-feedback ${settings.userTheme==='default'?'active':''}`} onClick={()=>setSettings({...settings, userTheme: 'default'})}>🔵 預設藍</button>
                                 {Object.entries(UNLOCKS).map(([lvl, name]) => {
-                                    const themeKey = name.match(/[\u4e00-\u9fa5]+ ([a-zA-Z]+)/)?.[1]?.toLowerCase() || 'pink'; // Simple extraction fallback
+                                    const themeKey = name.match(/[\u4e00-\u9fa5]+ ([a-zA-Z]+)/)?.[1]?.toLowerCase() || 'pink';
                                     const themeCode = {
                                         "10": "pink", "20": "mono", "30": "teal", "40": "wine", "50": "silver",
                                         "60": "purple", "70": "gold", "80": "colorful", "90": "twitter", "100": "orange",
@@ -395,7 +403,7 @@ export const SettingsModal = ({
                 {activeTab === 'emoji' && (
                     <>
                         <div className="setting-group">
-                            <div className="setting-group-header">🎨 自訂數量</div>
+                            <div className="setting-group-header"><Icon path={ICONS.palette} style={{marginRight:'6px'}} /> 自訂數量</div>
                             <div className="setting-row">
                                 <div className="setting-label">最少幾個？</div>
                                 <div className="setting-control"><input type="range" min="1" max="10" value={settings.customMin} onChange={(e) => updateCustomMix('min', parseInt(e.target.value))} /><span className="slider-val-display">{settings.customMin}</span></div>
@@ -407,7 +415,7 @@ export const SettingsModal = ({
                         </div>
                         
                         <div className="setting-group">
-                            <div className="setting-group-header">🙂 臉部表符 (點擊以停用/啟用)</div>
+                            <div className="setting-group-header"><Icon path={ICONS.face} style={{marginRight:'6px'}} /> 臉部表符 (點擊以停用/啟用)</div>
                             <div className="emoji-input-group">
                                 <input type="text" id="new-face-input" className="emoji-input" placeholder="貼上或輸入新表符..." />
                                 <button className="emoji-add-btn touch-feedback" onClick={() => {
@@ -427,7 +435,7 @@ export const SettingsModal = ({
                         </div>
 
                         <div className="setting-group">
-                            <div className="setting-group-header">✨ 裝飾符號 (點擊以停用/啟用)</div>
+                            <div className="setting-group-header"><Icon path={ICONS.sparkle} style={{marginRight:'6px'}} /> 裝飾符號 (點擊以停用/啟用)</div>
                             <div className="emoji-input-group">
                                 <input type="text" id="new-decor-input" className="emoji-input" placeholder="貼上或輸入新符號..." />
                                 <button className="emoji-add-btn touch-feedback" onClick={() => {
@@ -451,9 +459,8 @@ export const SettingsModal = ({
                                 if(confirm("確定要恢復預設的表情符號列表嗎？")) {
                                     setActiveFaces(DEFAULT_FACES);
                                     setActiveDecor(DEFAULT_DECOR);
-                                    // Reset disabled lists if implemented
                                 }
-                            }}>🔄 恢復預設表符列表</button>
+                            }}><Icon path={ICONS.refresh} style={{marginRight:'4px'}} /> 恢復預設表符列表</button>
                         </div>
                     </>
                 )}
@@ -461,10 +468,10 @@ export const SettingsModal = ({
                 {activeTab === 'data' && (
                     <>
                         <div className="setting-group">
-                            <div className="setting-group-header">💾 資料備份與還原</div>
+                            <div className="setting-group-header"><Icon path={ICONS.save} style={{marginRight:'6px'}} /> 資料備份與還原</div>
                             <div className="backup-grid">
-                                <div className="backup-btn touch-feedback" onClick={exportAllData}><span className="backup-icon">📤</span><span className="backup-label">匯出檔案</span></div>
-                                <div className="backup-btn touch-feedback" onClick={() => document.getElementById('import-file')?.click()}><span className="backup-icon">📥</span><span className="backup-label">匯入檔案</span></div>
+                                <div className="backup-btn touch-feedback" onClick={exportAllData}><span className="backup-icon"><Icon path={ICONS.export} /></span><span className="backup-label">匯出檔案</span></div>
+                                <div className="backup-btn touch-feedback" onClick={() => document.getElementById('import-file')?.click()}><span className="backup-icon"><Icon path={ICONS.import} /></span><span className="backup-label">匯入檔案</span></div>
                                 <input type="file" id="import-file" style={{display:'none'}} accept=".json" onChange={(e) => {
                                     if(e.target.files?.[0]) importAllData(e.target.files[0]);
                                 }} />
@@ -475,7 +482,7 @@ export const SettingsModal = ({
                             <div className="setting-row"><div className="setting-label">清除歷史紀錄</div><button className="clear-btn touch-feedback" style={{width:'auto', padding:'6px 12px'}} onClick={clearHistory}>執行</button></div>
                             <div className="setting-row"><div className="setting-label">清除我的最愛</div><button className="clear-btn touch-feedback" style={{width:'auto', padding:'6px 12px'}} onClick={clearFavorites}>執行</button></div>
                             <div className="setting-row" style={{justifyContent:'center', borderBottom:'none', paddingTop:'15px'}}>
-                                <button className="clear-btn touch-feedback" style={{width:'100%', border:'2px solid var(--delete-color)', background:'rgba(255, 59, 48, 0.05)'}} onClick={clearAllData}>⚠️ 完全重置所有資料</button>
+                                <button className="clear-btn touch-feedback" style={{width:'100%', border:'2px solid var(--delete-color)', background:'rgba(255, 59, 48, 0.05)'}} onClick={clearAllData}><Icon path={ICONS.reset} style={{marginRight:'4px'}} /> 完全重置所有資料</button>
                             </div>
                         </div>
                     </>

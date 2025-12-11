@@ -18,8 +18,8 @@ export const DictionaryPanel = ({
     toggleDict, 
     currentMain, 
     setCurrentMain, 
-    currentSub,
-    setCurrentSub, 
+    setCurrentSub,
+    currentSub, 
     database, 
     settings, 
     savedSubs, 
@@ -85,6 +85,7 @@ export const DictionaryPanel = ({
                         </button>
                     </div>
                     <div className="grid-container">
+                        {!currentMain && <div className="sub-placeholder" style={{gridColumn: '1 / -1', width: '100%'}}>請選擇上方分類...</div>}
                         {currentMain && currentMain !== 'featured' && database[currentMain] && Object.keys(database[currentMain].subs).map(subKey => (
                             <CategoryBtn 
                                 key={subKey} 
@@ -109,7 +110,7 @@ export const DictionaryPanel = ({
                                 }}
                             />
                         ))}
-                        {currentMain && !currentSub && <div className="sub-placeholder w-full col-span-3">請選擇上方分類...</div>}
+                        {currentMain === 'featured' && savedSubs.length === 0 && <div className="sub-placeholder" style={{gridColumn: '1 / -1', width: '100%'}}>尚未有收藏的細項，請去其他分類點擊「加入」</div>}
                     </div>
                 </>
             )}
@@ -120,12 +121,12 @@ export const DictionaryPanel = ({
 export const AiInputPanel = ({ aiInputValue, setAiInputValue, aiLoading, aiMode, requestAI }: any) => (
     <div className="ai-input-container">
         <div className="custom-ai-block">
-            <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <div style={{ flex: 1, position: 'relative', width: '100%' }}>
                 <input 
                     type="text" 
                     id="custom-gen-input" 
                     className="custom-ai-input" 
-                    placeholder="✨ 輸入關鍵字句 或 貼上粉絲留言..." 
+                    placeholder="輸入關鍵字句 或 貼上粉絲留言..." 
                     value={aiInputValue} 
                     onChange={(e) => setAiInputValue(e.target.value)}
                     style={{ paddingRight: '36px' }}
@@ -133,14 +134,14 @@ export const AiInputPanel = ({ aiInputValue, setAiInputValue, aiLoading, aiMode,
                 {aiInputValue && (
                     <div 
                         className="touch-feedback"
-                        style={{ position: 'absolute', right: '10px', color: 'var(--sub-text)', cursor: 'pointer', padding: '4px' }} 
+                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--sub-text)', cursor: 'pointer', padding: '4px' }} 
                         onClick={() => setAiInputValue('')}
                     >
                         <Icon path={ICONS.close} style={{ width: '1em', height: '1em' }} />
                     </div>
                 )}
             </div>
-            <div className="custom-btn-group flex gap-2 w-full sm:w-auto">
+            <div className="custom-btn-group">
                 <button 
                     className={`btn-custom-ai touch-feedback ${aiLoading ? 'disabled' : ''}`} 
                     onClick={() => requestAI('custom')}
