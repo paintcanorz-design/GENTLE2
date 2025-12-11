@@ -5,7 +5,7 @@ import { ICONS } from '../constants';
 
 export const Header = ({ onSettingsClick }: { onSettingsClick: () => void }) => (
     <div className="header-row">
-        <h1><Icon path={ICONS.logo} /> 紳士ＡＩ讚美產生器</h1>
+        <h1><Icon path={ICONS.logo} style={{marginRight: '8px'}} /> 紳士ＡＩ讚美產生器</h1>
         <div className="settings-hitbox" onClick={onSettingsClick}>
             <div className="settings-visual"><Icon path={ICONS.settings} /></div>
         </div>
@@ -32,7 +32,7 @@ export const DictionaryPanel = ({
     <div className="group-section">
         <div className="panel-header" onClick={toggleDict}>
             <span>
-                <Icon path={ICONS.dict} className="mr-2" />
+                <Icon path={ICONS.dict} style={{marginRight: '6px'}} />
                 預設辭庫
                 <span className={`dict-arrow ${dictExpanded ? 'expanded' : ''}`}><Icon path={ICONS.arrow} /></span>
             </span>
@@ -42,13 +42,13 @@ export const DictionaryPanel = ({
                 setCurrentSub(null);
                 toggleDict(true);
             }}>
-                <Icon path={ICONS.star} /> 精選
+                <Icon path={ICONS.star} style={{width:'1em', height:'1em'}} /> 精選
             </button>
         </div>
         
-        <div className={`panel-content ${dictExpanded ? '' : 'hidden'}`}>
-            {loading ? <div className="loading">正在讀取資料庫...</div> : (
-                <>
+        <div className={dictExpanded ? '' : 'hidden'}>
+            <div className="panel-content">
+                {loading ? <div className="loading">正在讀取資料庫...</div> : (
                     <div className="grid-container">
                         {Object.keys(database).map(key => (
                             <CategoryBtn 
@@ -63,9 +63,14 @@ export const DictionaryPanel = ({
                             />
                         ))}
                     </div>
-                    <hr className="section-divider" />
+                )}
+            </div>
+            
+            {!loading && (
+                <>
+                    <hr className="section-divider" style={{ marginTop: '8px' }} />
                     <div className="panel-header sub-header" style={{ cursor: 'default' }}>
-                        <span><Icon path={ICONS.subCat} className="mr-2" /> 細部分類</span>
+                        <span><Icon path={ICONS.subCat} style={{marginRight: '6px'}} /> 細部分類</span>
                         <button 
                             className={`header-small-btn touch-feedback ${(!currentMain || !currentSub) ? 'disabled' : ''} ${savedSubs.find((s:any) => s.main === currentMain && s.sub === currentSub) ? 'active' : ''}`}
                             onClick={(e) => {
@@ -80,37 +85,39 @@ export const DictionaryPanel = ({
                                 }
                             }}
                         >
-                            <Icon path={savedSubs.find((s:any) => s.main === currentMain && s.sub === currentSub) ? ICONS.remove : ICONS.add} /> 
+                            <Icon path={savedSubs.find((s:any) => s.main === currentMain && s.sub === currentSub) ? ICONS.remove : ICONS.add} style={{width:'1em', height:'1em'}} /> 
                             {savedSubs.find((s:any) => s.main === currentMain && s.sub === currentSub) ? '移除' : '加入'}
                         </button>
                     </div>
-                    <div className="grid-container">
-                        {!currentMain && <div className="sub-placeholder" style={{gridColumn: '1 / -1', width: '100%'}}>請選擇上方分類...</div>}
-                        {currentMain && currentMain !== 'featured' && database[currentMain] && Object.keys(database[currentMain].subs).map(subKey => (
-                            <CategoryBtn 
-                                key={subKey} 
-                                active={currentSub === subKey} 
-                                label={database[currentMain].subs[subKey].label} 
-                                onClick={(e) => { 
-                                    createParticles(e.clientX, e.clientY);
-                                    setCurrentSub(subKey); 
-                                    generatePhrases(currentMain, subKey); 
-                                }} 
-                            />
-                        ))}
-                        {currentMain === 'featured' && savedSubs.map((s:any) => (
-                            <CategoryBtn 
-                                key={s.sub}
-                                active={currentSub === s.sub}
-                                label={s.label}
-                                onClick={(e) => {
-                                    createParticles(e.clientX, e.clientY);
-                                    setCurrentSub(s.sub);
-                                    generatePhrases(s.main, s.sub);
-                                }}
-                            />
-                        ))}
-                        {currentMain === 'featured' && savedSubs.length === 0 && <div className="sub-placeholder" style={{gridColumn: '1 / -1', width: '100%'}}>尚未有收藏的細項，請去其他分類點擊「加入」</div>}
+                    <div className="panel-content">
+                        <div className="grid-container">
+                            {!currentMain && <div className="sub-placeholder" style={{gridColumn: '1 / -1', width: '100%'}}>請選擇上方分類...</div>}
+                            {currentMain && currentMain !== 'featured' && database[currentMain] && Object.keys(database[currentMain].subs).map(subKey => (
+                                <CategoryBtn 
+                                    key={subKey} 
+                                    active={currentSub === subKey} 
+                                    label={database[currentMain].subs[subKey].label} 
+                                    onClick={(e) => { 
+                                        createParticles(e.clientX, e.clientY);
+                                        setCurrentSub(subKey); 
+                                        generatePhrases(currentMain, subKey); 
+                                    }} 
+                                />
+                            ))}
+                            {currentMain === 'featured' && savedSubs.map((s:any) => (
+                                <CategoryBtn 
+                                    key={s.sub}
+                                    active={currentSub === s.sub}
+                                    label={s.label}
+                                    onClick={(e) => {
+                                        createParticles(e.clientX, e.clientY);
+                                        setCurrentSub(s.sub);
+                                        generatePhrases(s.main, s.sub);
+                                    }}
+                                />
+                            ))}
+                            {currentMain === 'featured' && savedSubs.length === 0 && <div className="sub-placeholder" style={{gridColumn: '1 / -1', width: '100%'}}>尚未有收藏的細項，請去其他分類點擊「加入」</div>}
+                        </div>
                     </div>
                 </>
             )}
@@ -126,7 +133,7 @@ export const AiInputPanel = ({ aiInputValue, setAiInputValue, aiLoading, aiMode,
                     type="text" 
                     id="custom-gen-input" 
                     className="custom-ai-input" 
-                    placeholder="輸入關鍵字句 或 貼上粉絲留言..." 
+                    placeholder="✨ 輸入關鍵字句 或 貼上粉絲留言..." 
                     value={aiInputValue} 
                     onChange={(e) => setAiInputValue(e.target.value)}
                     style={{ paddingRight: '36px' }}
@@ -159,14 +166,38 @@ export const AiInputPanel = ({ aiInputValue, setAiInputValue, aiLoading, aiMode,
     </div>
 );
 
-export const StatusTips = ({ aiLoading, statusText }: any) => (
-    <div className="status-tips-container">
-        <div className={`status-indicator ${aiLoading ? 'pulsing' : ''}`}>
-            {aiLoading ? statusText : <span dangerouslySetInnerHTML={{ __html: statusText.startsWith('📍') || statusText.startsWith('🔍') ? statusText : `<span class="status-dot"></span> ${statusText}` }} />}
+export const StatusTips = ({ aiLoading, statusText }: any) => {
+    let content;
+    if (aiLoading) {
+        content = statusText;
+    } else if (statusText.startsWith('📍')) {
+        const text = statusText.substring(2);
+        content = (
+            <span style={{ display: 'flex', alignItems: 'center' }}>
+                <Icon path={ICONS.subCat} style={{ width: '1.2em', height: '1.2em', marginRight: '4px' }} />
+                {text}
+            </span>
+        );
+    } else if (statusText.startsWith('🔍')) {
+         content = (
+            <span style={{ display: 'flex', alignItems: 'center' }}>
+                <Icon path={ICONS.search} style={{ width: '1.2em', height: '1.2em', marginRight: '4px' }} />
+                {statusText.substring(2)}
+            </span>
+        );
+    } else {
+        content = <span dangerouslySetInnerHTML={{ __html: `<span class="status-dot"></span> ${statusText}` }} />;
+    }
+
+    return (
+        <div className="status-tips-container">
+            <div className={`status-indicator ${aiLoading ? 'pulsing' : ''}`}>
+                {content}
+            </div>
+            <div className="tips-text-right">💡 點選語句可複製，按鈕可刷新</div>
         </div>
-        <div className="tips-text-right">💡 點選語句可複製，按鈕可刷新</div>
-    </div>
-);
+    );
+};
 
 export const ResultList = ({ displayItems, handleCopy, speakText, toggleFavorite, favorites, settings }: any) => (
     <div className="result-area">
