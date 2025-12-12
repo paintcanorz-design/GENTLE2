@@ -78,7 +78,7 @@ export const DictionaryPanel = ({
                             {savedSubs.find((s:any) => s.main === currentMain && s.sub === currentSub) ? '移除' : '加入'}
                         </button>
                     </div>
-                    <div className="panel-content">
+                    <div className={`panel-content ${!currentMain ? 'compact-panel' : ''}`}>
                         <div className="grid-container">
                             {!currentMain && <div className="sub-placeholder" style={{gridColumn: '1 / -1', width: '100%'}}>請選擇上方分類...</div>}
                             {currentMain && currentMain !== 'featured' && database[currentMain] && Object.keys(database[currentMain].subs).map(subKey => (

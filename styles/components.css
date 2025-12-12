@@ -13,10 +13,12 @@ html.dark-mode .xp-badge { color: var(--sub-text); border: 1px solid var(--sub-t
 html.dark-mode .panel-header { background: transparent; }
 .panel-header span { display: flex; align-items: center; }
 .panel-header-sub { font-size: 0.75rem; opacity: 0.6; font-weight: normal; margin-left: auto; }
-.panel-content { padding: 0 10px 10px 10px; }
+.panel-content { padding: 0 10px 10px 10px; transition: all 0.3s ease; }
+.panel-content.compact-panel { padding-top: 0; padding-bottom: 6px; }
 .panel-content.hidden { display: none; }
 .section-title { display: none; }
-.sub-placeholder { text-align: center; color: var(--sub-text); font-size: 0.85rem; padding: 10px; width: 100%; }
+.sub-placeholder { text-align: center; color: var(--sub-text); font-size: 0.85rem; padding: 10px; width: 100%; transition: all 0.3s ease; }
+.compact-panel .sub-placeholder { padding: 4px 10px; margin-top: -2px; }
 .panel-header.sub-header { padding-top: 5px; }
 
 .dict-arrow { transition: transform 0.3s ease; display: inline-block; margin-left: 6px; opacity: 0.6; transform: rotate(0deg); }
@@ -109,6 +111,7 @@ html.dark-mode .panel-header { background: transparent; }
 .btn-custom-ai.disabled::after { display: none; }
 
 .custom-ai-block { width: 100%; display: flex; gap: 8px; align-items: center; margin: 0; padding: 0; }
+.custom-btn-group { display: flex; gap: 8px; }
 .header-small-btn { font-size: 0.8rem; padding: 4px 10px; border-radius: 50px; background: var(--card); border: 1px solid var(--border); color: var(--text); cursor: pointer; font-weight: 600; transition: all 0.2s; box-shadow: none; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
 .header-small-btn.active { background: var(--active-bg); color: var(--active-text); border-color: transparent; }
 .header-small-btn.disabled { opacity: 0.5; pointer-events: none; }

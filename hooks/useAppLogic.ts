@@ -30,7 +30,7 @@ export const useAppLogic = () => {
     const [currentMain, setCurrentMain] = useState<string | null>(null);
     const [currentSub, setCurrentSub] = useState<string | null>(null);
     const [displayItems, setDisplayItems] = useState<DisplayItem[]>([]);
-    const [dictExpanded, setDictExpanded] = useState(false);
+    const [dictExpanded, setDictExpanded] = useState(true);
     
     const [searchQuery, setSearchQuery] = useState(""); 
     const [aiInputValue, setAiInputValue] = useState(""); 
