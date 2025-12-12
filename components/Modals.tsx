@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Icon, Switch } from './UI_Components';
 import { ICONS, ACHIEVEMENTS, LEVEL_TITLES, UNLOCKS, DEFAULT_FACES, DEFAULT_DECOR } from '../constants';
@@ -316,14 +317,6 @@ export const SettingsModal = ({
                             <div className="setting-row">
                                 <div className="setting-label">深色模式</div>
                                 <Switch checked={settings.darkMode} onChange={(c) => setSettings({...settings, darkMode: c})} />
-                            </div>
-                            <div className="setting-row">
-                                <div className="setting-label">減少圖像符號模式</div>
-                                <Switch checked={settings.pureMode} onChange={(c) => setSettings({...settings, pureMode: c})} />
-                            </div>
-                            <div className="setting-row">
-                                <div className="setting-label">隱藏趣味性要素</div>
-                                <Switch checked={settings.hideAd} onChange={(c) => setSettings({...settings, hideAd: c})} />
                             </div>
                             <div className="setting-row">
                                 <div className="setting-label">字體大小</div>

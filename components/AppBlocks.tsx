@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Icon, Switch, CategoryBtn, ActionBtn } from './UI_Components';
 import { ICONS } from '../constants';
@@ -141,7 +142,7 @@ export const AiInputPanel = ({ aiInputValue, setAiInputValue, aiLoading, aiMode,
                 {aiInputValue && (
                     <div 
                         className="touch-feedback"
-                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--sub-text)', cursor: 'pointer', padding: '4px' }} 
+                        style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--sub-text)', cursor: 'pointer', padding: '4px' }} 
                         onClick={() => setAiInputValue('')}
                     >
                         <Icon path={ICONS.close} style={{ width: '1em', height: '1em' }} />
@@ -326,7 +327,7 @@ export const SearchHistoryBlock = ({ setShowHistory, setHistoryTab, setShowAchie
                 {searchQuery && (
                     <div 
                         className="touch-feedback"
-                        style={{ position: 'absolute', right: '10px', color: 'var(--text)', opacity: 0.5, cursor: 'pointer', padding: '4px' }} 
+                        style={{ position: 'absolute', right: '14px', color: 'var(--text)', opacity: 0.5, cursor: 'pointer', padding: '4px' }} 
                         onClick={() => setSearchQuery('')}
                     >
                         <Icon path={ICONS.close} style={{ width: '1em', height: '1em' }} />
