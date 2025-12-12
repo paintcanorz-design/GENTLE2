@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Database, AppSettings, Phrase, DisplayItem, SavedSubCategory, UserAchievement } from './types';
 import { SHEET_CSV_URL, KAOMOJI_SHEET_CSV_URL, DEFAULT_FACES, DEFAULT_DECOR, PUNCTUATIONS, LEVEL_TITLES, UNLOCKS, ACHIEVEMENTS, XP_COPY, XP_FAV } from './constants';
@@ -175,9 +174,13 @@ export default function App() {
         loadData();
         loadLocal();
         setTimeout(() => setShowWelcome(true), 1000);
+
+        // Velo: Request Load
+        window.parent.postMessage({ type: 'REQUEST_LOAD' }, "*");
+
     }, []);
 
-    // --- Effect: AI Result Listener ---
+    // --- Effect: AI Result & Velo Load Listener ---
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
             const data = event.data;
@@ -216,13 +219,28 @@ export default function App() {
                     triggerHaptic(100);
                 }
             }
+
+            // Velo: Load Data
+            if (data.type === 'LOAD_DATA' && data.payload) {
+                console.log("Received data from Velo", data.payload);
+                const p = data.payload;
+                if (p.appSettings) setSettings(prev => ({...prev, ...p.appSettings}));
+                if (p.favorites) setFavorites(p.favorites);
+                if (p.historyLog) setHistory(p.historyLog);
+                if (p.userAchieve) setUserAchieve(p.userAchieve);
+                if (p.savedSubCategories) setSavedSubs(p.savedSubCategories);
+                if (p.customFaces) setActiveFaces(p.customFaces);
+                if (p.disabledFaces) setDisabledFaces(p.disabledFaces);
+                if (p.customDecor) setActiveDecor(p.customDecor);
+                if (p.disabledDecor) setDisabledDecor(p.disabledDecor);
+            }
         };
 
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
     }, []); 
 
-    // --- Effect: Apply Settings (Theme, Font, etc) ---
+    // --- Effect: Apply Settings & Save ---
     useEffect(() => {
         const root = document.documentElement;
         // Clean all possible theme classes
@@ -260,7 +278,7 @@ export default function App() {
         
         if (!settings.showSpeak) document.body.classList.add('hide-speak'); else document.body.classList.remove('hide-speak');
 
-        // Persist
+        // Persist Local
         localStorage.setItem('appSettings', JSON.stringify(settings));
         localStorage.setItem('favorites', JSON.stringify(favorites));
         localStorage.setItem('historyLog', JSON.stringify(history));
@@ -271,6 +289,20 @@ export default function App() {
         localStorage.setItem('disabledFaces', JSON.stringify(disabledFaces));
         localStorage.setItem('customDecor', JSON.stringify(activeDecor));
         localStorage.setItem('disabledDecor', JSON.stringify(disabledDecor));
+
+        // Persist Velo
+        const payload = {
+            appSettings: settings,
+            favorites,
+            historyLog: history,
+            userAchieve,
+            savedSubCategories: savedSubs,
+            customFaces: activeFaces,
+            disabledFaces,
+            customDecor: activeDecor,
+            disabledDecor
+        };
+        window.parent.postMessage({ type: 'SAVE_DATA', payload }, "*");
 
     }, [settings, favorites, history, userAchieve, savedSubs, activeFaces, disabledFaces, activeDecor, disabledDecor]);
 
