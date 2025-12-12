@@ -48,6 +48,7 @@ export default function App() {
     const [statusText, setStatusText] = useState("請選擇預設辭庫或AI生成");
     const [aiLoading, setAiLoading] = useState(false);
     const [aiMode, setAiMode] = useState<'custom' | 'reply' | 'rewrite' | null>(null);
+    const [customBg, setCustomBg] = useState<string | null>(null); // New state for Velo background override
     
     // Modals
     const [showSettings, setShowSettings] = useState(false);
@@ -184,6 +185,12 @@ export default function App() {
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
             const data = event.data;
+
+            // Handle Velo Background Change
+            if (data.type === 'CHANGE_BG' && data.color) {
+                setCustomBg(data.color);
+            }
+
             if (data.type === 'BATCH_AI_RESULT') {
                 const { results } = data;
                 setAiLoading(false);
@@ -259,6 +266,13 @@ export default function App() {
         if (settings.userTheme !== 'default') {
             root.classList.add(`theme-${settings.userTheme}`);
         }
+
+        // Apply Custom Velo Background Override
+        if (customBg) {
+            root.style.setProperty('--bg', customBg);
+        } else {
+            root.style.removeProperty('--bg');
+        }
         
         themeCount.current.add(settings.userTheme);
         if (themeCount.current.size >= 3) unlockAchievement("color_master");
@@ -304,7 +318,7 @@ export default function App() {
         };
         window.parent.postMessage({ type: 'SAVE_DATA', payload }, "*");
 
-    }, [settings, favorites, history, userAchieve, savedSubs, activeFaces, disabledFaces, activeDecor, disabledDecor]);
+    }, [settings, favorites, history, userAchieve, savedSubs, activeFaces, disabledFaces, activeDecor, disabledDecor, customBg]);
 
     // --- Logic ---
     const showToast = (msg: string) => {
