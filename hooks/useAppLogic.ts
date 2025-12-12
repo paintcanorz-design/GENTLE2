@@ -1,32 +1,28 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Database, AppSettings, Phrase, DisplayItem, SavedSubCategory, UserAchievement } from '../types';
-import { SHEET_CSV_URL, KAOMOJI_SHEET_CSV_URL, DEFAULT_FACES, DEFAULT_DECOR, PUNCTUATIONS, ACHIEVEMENTS, XP_COPY, XP_FAV } from '../constants';
+import { useState, useEffect, useRef } from 'react';
+import { DisplayItem, Phrase } from '../types';
+import { DEFAULT_FACES, DEFAULT_DECOR, PUNCTUATIONS, XP_COPY, XP_FAV } from '../constants';
 import { triggerHaptic, createParticles, getWeightedRandom, exportData, importData } from '../services/utils';
 
+// Import split hooks
+import { useCoreData } from './useCoreData';
+import { useUserData } from './useUserData';
+import { useGameLogic } from './useGameLogic';
+
 export const useAppLogic = () => {
-    const [database, setDatabase] = useState<Database>({});
-    const [kaomojiList, setKaomojiList] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-    
-    const [settings, setSettings] = useState<AppSettings>({
-        fontSize: 0, resultCount: 6, showCN: true, showSpeak: true, customMin: 3, customMax: 5,
-        voiceRate: 1.1, voicePitch: 1.0, copyAction: 'none', userXP: 0, userLevel: 1,
-        userTheme: 'default', hideAd: false, totalCopies: 0,
-        darkMode: typeof localStorage !== 'undefined' && localStorage.getItem('theme') === null 
-            ? true 
-            : localStorage.getItem('theme') === 'dark'
-    });
-    
-    const [history, setHistory] = useState<string[]>([]);
-    const [favorites, setFavorites] = useState<string[]>([]);
-    const [userAchieve, setUserAchieve] = useState<Record<string, UserAchievement>>({});
-    const [savedSubs, setSavedSubs] = useState<SavedSubCategory[]>([]);
-    
-    const [activeFaces, setActiveFaces] = useState<string[]>(DEFAULT_FACES);
-    const [disabledFaces, setDisabledFaces] = useState<string[]>([]);
-    const [activeDecor, setActiveDecor] = useState<string[]>(DEFAULT_DECOR);
-    const [disabledDecor, setDisabledDecor] = useState<string[]>([]);
-    
+    // 1. Core Data (Database, Settings)
+    const { database, kaomojiList, loading, settings, setSettings } = useCoreData();
+
+    // 2. User Data (History, Favs, Custom Faces)
+    const { 
+        history, setHistory, favorites, setFavorites, savedSubs, setSavedSubs,
+        activeFaces, setActiveFaces, disabledFaces, setDisabledFaces,
+        activeDecor, setActiveDecor, disabledDecor, setDisabledDecor
+    } = useUserData();
+
+    // 3. Game Logic (XP, Achievements)
+    const { userAchieve, setUserAchieve, unlockAchievement, addXP } = useGameLogic(settings, setSettings);
+
+    // 4. Local UI State
     const [currentMain, setCurrentMain] = useState<string | null>(null);
     const [currentSub, setCurrentSub] = useState<string | null>(null);
     const [displayItems, setDisplayItems] = useState<DisplayItem[]>([]);
@@ -52,6 +48,7 @@ export const useAppLogic = () => {
     const [settingsTab, setSettingsTab] = useState<'general' | 'theme' | 'emoji' | 'data'>('general');
     const [historyTab, setHistoryTab] = useState<'history' | 'fav'>('history');
 
+    // Refs for logic
     const seenIndices = useRef<Set<number>>(new Set());
     const aiStartTime = useRef<number>(0);
     const aiCount = useRef<number>(0);
@@ -63,146 +60,47 @@ export const useAppLogic = () => {
     const regenStreak = useRef<number>(0);
     const eroticStreak = useRef<number>(0);
     const cuteStreak = useRef<number>(0);
-    const themeCount = useRef<Set<string>>(new Set());
 
+    // Initial load effects
     useEffect(() => {
-        const loadData = async () => {
-            const fetchText = async (url: string, key: string) => {
-                const cached = localStorage.getItem(key);
-                if (cached) return cached;
-                try {
-                    const res = await fetch(url);
-                    if (!res.ok) throw new Error("Fetch failed");
-                    const text = await res.text();
-                    localStorage.setItem(key, text);
-                    return text;
-                } catch (e) { return ""; }
-            };
-
-            const [mainCSV, kaomojiCSV] = await Promise.all([
-                fetchText(SHEET_CSV_URL, 'mainDB'),
-                fetchText(KAOMOJI_SHEET_CSV_URL, 'kaomojiDB')
-            ]);
-
-            const db: Database = {};
-            mainCSV.split(/\r?\n/).slice(1).forEach(row => {
-                if (!row.trim()) return;
-                const cols = row.split(',');
-                if (cols.length < 4) return;
-                
-                const mainKey = cols[0].trim().replace(/^"|"$/g, '');
-                const subKey = cols[1].trim().replace(/^"|"$/g, '');
-                const jp = cols[2].trim().replace(/^"|"$/g, '');
-                const cn = cols[3].trim().replace(/^"|"$/g, '');
-                
-                if (!mainKey || !subKey) return;
-                if (!db[mainKey]) db[mainKey] = { label: mainKey, subs: {} };
-                if (!db[mainKey].subs[subKey]) db[mainKey].subs[subKey] = { label: subKey, phrases: [] };
-                if (jp) db[mainKey].subs[subKey].phrases.push({ jp, cn });
-            });
-            setDatabase(db);
-
-            const kList: string[] = [];
-            kaomojiCSV.split(/\r?\n/).slice(1).forEach(row => {
-                const k = row.split(',')[0]?.trim().replace(/^"|"$/g, '');
-                if (k) kList.push(k);
-            });
-            setKaomojiList(kList);
-            setLoading(false);
-        };
-
-        const loadLocal = () => {
-            try {
-                const s = localStorage.getItem('appSettings');
-                if (s) {
-                    const parsed = JSON.parse(s);
-                    if (parsed.darkMode === undefined) {
-                        parsed.darkMode = localStorage.getItem('theme') !== 'light'; 
-                    }
-                    setSettings(prev => ({ ...prev, ...parsed }));
-                } else {
-                    setSettings(prev => ({ ...prev, darkMode: true }));
-                }
-
-                const h = localStorage.getItem('historyLog');
-                if (h) {
-                    const parsedH = JSON.parse(h);
-                    if(Array.isArray(parsedH)) setHistory(parsedH);
-                }
-                const f = localStorage.getItem('favorites');
-                if (f) {
-                    const parsedF = JSON.parse(f);
-                    if(Array.isArray(parsedF)) setFavorites(parsedF);
-                }
-
-                const a = localStorage.getItem('userAchieve');
-                if (a) setUserAchieve(JSON.parse(a));
-                const sub = localStorage.getItem('savedSubCategories');
-                if (sub) setSavedSubs(JSON.parse(sub));
-                
-                const faces = localStorage.getItem('customFaces');
-                if (faces) setActiveFaces(JSON.parse(faces));
-                const disFaces = localStorage.getItem('disabledFaces');
-                if (disFaces) setDisabledFaces(JSON.parse(disFaces));
-                
-                const decor = localStorage.getItem('customDecor');
-                if (decor) setActiveDecor(JSON.parse(decor));
-                const disDecor = localStorage.getItem('disabledDecor');
-                if (disDecor) setDisabledDecor(JSON.parse(disDecor));
-
-            } catch (e) { console.error("Load local data error:", e); }
-        };
-
-        loadData();
-        loadLocal();
+        // Load local data override from useCoreData/useUserData handles basic loads, 
+        // but we handle welcome modal here
         setTimeout(() => setShowWelcome(true), 1000);
-
         window.parent.postMessage({ type: 'REQUEST_LOAD' }, "*");
-
     }, []);
+
+    // Custom BG effect
+    useEffect(() => {
+        if (customBg) {
+            document.documentElement.style.setProperty('--bg', customBg);
+        } else {
+            document.documentElement.style.removeProperty('--bg');
+        }
+    }, [customBg]);
+
+    // Sync data to parent (iframe context)
+    useEffect(() => {
+        const payload = {
+            appSettings: settings,
+            favorites,
+            historyLog: history,
+            userAchieve,
+            savedSubCategories: savedSubs,
+            customFaces: activeFaces,
+            disabledFaces,
+            customDecor: activeDecor,
+            disabledDecor
+        };
+        window.parent.postMessage({ type: 'SAVE_DATA', payload }, "*");
+    }, [settings, favorites, history, userAchieve, savedSubs, activeFaces, disabledFaces, activeDecor, disabledDecor]);
+
 
     const showToast = (msg: string) => {
         setToastMsg(msg);
         setTimeout(() => setToastMsg(null), 1500);
     };
 
-    const unlockAchievement = useCallback((id: string) => {
-        if (!ACHIEVEMENTS[id]) return;
-        
-        setUserAchieve(prev => {
-            if (prev[id]?.unlocked) return prev;
-            
-            const newAchieve = { ...prev, [id]: { unlocked: true, date: Date.now() } };
-            
-            const t = document.getElementById('achieve-toast');
-            if (t) {
-                const iconEl = t.querySelector('.achieve-toast-icon');
-                if (iconEl) iconEl.innerHTML = ACHIEVEMENTS[id].icon;
-                const titleEl = t.querySelector('.achieve-toast-title');
-                if (titleEl) titleEl.textContent = "成就解鎖！";
-                const descEl = t.querySelector('.achieve-toast-desc');
-                if (descEl) descEl.textContent = ACHIEVEMENTS[id].title;
-                
-                t.classList.add('show');
-                triggerHaptic(200);
-                setTimeout(() => t.classList.remove('show'), 3000);
-            }
-            return newAchieve;
-        });
-        
-        setTimeout(() => {
-            setUserAchieve(current => {
-                const allKeys = Object.keys(ACHIEVEMENTS).filter(k => k !== 'all_complete');
-                const unlockedCount = allKeys.filter(k => current[k]?.unlocked).length;
-                if (unlockedCount === allKeys.length && !current['all_complete']?.unlocked) {
-                    const finalAchieve = { ...current, ['all_complete']: { unlocked: true, date: Date.now() } };
-                    return finalAchieve;
-                }
-                return current;
-            });
-        }, 500);
-    }, []);
-
+    // --- Message Listener (AI & Data Sync) ---
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
             const data = event.data;
@@ -263,104 +161,9 @@ export const useAppLogic = () => {
 
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, [unlockAchievement]); 
+    }, [unlockAchievement, setSettings, setFavorites, setHistory, setUserAchieve, setSavedSubs, setActiveFaces, setDisabledFaces, setActiveDecor, setDisabledDecor]); 
 
-    useEffect(() => {
-        const root = document.documentElement;
-        root.classList.remove('theme-pink', 'theme-gold', 'theme-mono', 'theme-teal', 'theme-silver', 'theme-purple', 'theme-wine', 'theme-colorful', 'theme-twitter', 'theme-fanbox', 'theme-youtube', 'theme-tech', 'theme-plurk', 'theme-melon', 'theme-orange');
-        
-        if (settings.darkMode) {
-            root.classList.add('dark-mode');
-            localStorage.setItem('theme', 'dark'); 
-        } else {
-            root.classList.remove('dark-mode');
-            localStorage.setItem('theme', 'light');
-        }
-
-        if (settings.userTheme !== 'default') {
-            root.classList.add(`theme-${settings.userTheme}`);
-        }
-
-        if (customBg) {
-            root.style.setProperty('--bg', customBg);
-        } else {
-            root.style.removeProperty('--bg');
-        }
-        
-        themeCount.current.add(settings.userTheme);
-        if (themeCount.current.size >= 3) unlockAchievement("color_master");
-        
-        if (settings.fontSize === 0) { root.style.setProperty('--fs-jp', '0.8rem'); root.style.setProperty('--fs-cn', '0.75rem'); }
-        else if (settings.fontSize === 1) { root.style.setProperty('--fs-jp', '0.9rem'); root.style.setProperty('--fs-cn', '0.8rem'); }
-        else { root.style.setProperty('--fs-jp', '1.1rem'); root.style.setProperty('--fs-cn', '0.95rem'); }
-
-        if (!settings.showCN) {
-            document.body.classList.add('hide-cn');
-            unlockAchievement("n1_japanese");
-        } else {
-            document.body.classList.remove('hide-cn');
-        }
-        
-        if (!settings.showSpeak) document.body.classList.add('hide-speak'); else document.body.classList.remove('hide-speak');
-
-        localStorage.setItem('appSettings', JSON.stringify(settings));
-        localStorage.setItem('favorites', JSON.stringify(favorites));
-        localStorage.setItem('historyLog', JSON.stringify(history));
-        localStorage.setItem('userAchieve', JSON.stringify(userAchieve));
-        localStorage.setItem('savedSubCategories', JSON.stringify(savedSubs));
-        
-        localStorage.setItem('customFaces', JSON.stringify(activeFaces));
-        localStorage.setItem('disabledFaces', JSON.stringify(disabledFaces));
-        localStorage.setItem('customDecor', JSON.stringify(activeDecor));
-        localStorage.setItem('disabledDecor', JSON.stringify(disabledDecor));
-
-        const payload = {
-            appSettings: settings,
-            favorites,
-            historyLog: history,
-            userAchieve,
-            savedSubCategories: savedSubs,
-            customFaces: activeFaces,
-            disabledFaces,
-            customDecor: activeDecor,
-            disabledDecor
-        };
-        window.parent.postMessage({ type: 'SAVE_DATA', payload }, "*");
-
-    }, [settings, favorites, history, userAchieve, savedSubs, activeFaces, disabledFaces, activeDecor, disabledDecor, customBg, unlockAchievement]);
-
-    const checkUnlocks = (level: number) => {
-        let msg = "";
-        if (level === 20) msg = "✨ 解鎖 🧘 賢者黑白主題！";
-        if (level === 100) msg = "🔓 解鎖主題：🍊 愛馬仕橘！";
-        if (msg) {
-            setTimeout(() => alert(`恭喜升級到 LV.${level}！\n${msg}\n請到設定頁面查看。`), 500);
-        }
-    };
-
-    const addXP = (amount: number) => {
-        let newXP = settings.userXP + amount;
-        let level = 1;
-        const getXPForLevel = (lvl: number) => (lvl >= 200 ? 50 : lvl >= 100 ? 20 : 5);
-        while (true) {
-            let needed = getXPForLevel(level);
-            if (newXP >= needed) { newXP -= needed; level++; } else break;
-        }
-
-        if (level > settings.userLevel) {
-            const toast = document.getElementById('levelup-toast');
-            if (toast) {
-                toast.textContent = `🎉 升級啦！LV.${level}`;
-                toast.className = "toast show";
-                setTimeout(() => toast.className = toast.className.replace("show", ""), 2000);
-            }
-            triggerHaptic(100);
-            checkUnlocks(level);
-            if (level >= 50) unlockAchievement("level_50");
-            if (level >= 100) unlockAchievement("level_100");
-        }
-        setSettings(s => ({ ...s, userXP: newXP, userLevel: level }));
-    };
+    // --- Core Logic ---
 
     const generateEmoji = () => {
         if (emojiLevel === 'kaomoji') return kaomojiList.length > 0 ? " " + kaomojiList[Math.floor(Math.random() * kaomojiList.length)] : "";
@@ -682,11 +485,11 @@ export const useAppLogic = () => {
         aiLoading, aiMode, showSettings, showHistory, showAchieve,
         showXP, showWelcome, showTutorial, selectedAchievement, settingsTab,
         historyTab, loading,
-        setSettings, setHistory, setFavorites, setUserAchieve, setSavedSubs,
-        setActiveFaces, setDisabledFaces, setActiveDecor, setDisabledDecor,
-        setCurrentMain, setCurrentSub, setDisplayItems, setDictExpanded,
-        setSearchQuery, setAiInputValue, setEmojiLevel, setToastMsg,
-        setStatusText, setAiLoading, setAiMode, setShowSettings, setShowHistory,
+        setSettings, setHistory, setFavorites, setSavedSubs,
+        setActiveFaces, setActiveDecor,
+        setCurrentMain, setCurrentSub, setDisplayItems,
+        setSearchQuery, setAiInputValue, setEmojiLevel, 
+        setShowSettings, setShowHistory,
         setShowAchieve, setShowXP, setShowWelcome, setShowTutorial,
         setSelectedAchievement, setSettingsTab, setHistoryTab,
         addXP, generateEmoji, generatePhrases, handleCopy, toggleFavorite,
