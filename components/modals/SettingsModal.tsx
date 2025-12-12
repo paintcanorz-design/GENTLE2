@@ -27,10 +27,15 @@ export const SettingsModal = ({
     
     return (
         <ModalWrapper onClose={onClose} id="settings-modal" contentId="settings-content-box">
-            <div className="modal-header"><div className="modal-title">⚙️ 詳細設定</div><div className="close-x touch-feedback" onClick={onClose}>×</div></div>
+            <div className="modal-header">
+                <div className="modal-title" style={{ display: 'flex', alignItems: 'center' }}>
+                    <Icon path={ICONS.settings} style={{ marginRight: '6px' }} /> 詳細設定
+                </div>
+                <div className="close-x touch-feedback" onClick={onClose}>×</div>
+            </div>
             <div className="tab-group">
                 <div className={`tab-btn touch-feedback ${activeTab === 'general' ? 'active' : ''}`} onClick={() => setActiveTab('general')}><Icon path={ICONS.settings} /> 一般</div>
-                <div className={`tab-btn touch-feedback ${activeTab === 'theme' ? 'active' : ''}`} onClick={() => setActiveTab('theme')}><Icon path={ICONS.theme} /> 外觀</div>
+                <div className={`tab-btn touch-feedback ${activeTab === 'theme' ? 'active' : ''}`} onClick={() => setActiveTab('theme')}><Icon path={ICONS.palette} /> 外觀</div>
                 <div className={`tab-btn touch-feedback ${activeTab === 'emoji' ? 'active' : ''}`} onClick={() => setActiveTab('emoji')}><Icon path={ICONS.emojiReroll} /> 表符</div>
                 <div className={`tab-btn touch-feedback ${activeTab === 'data' ? 'active' : ''}`} onClick={() => setActiveTab('data')}><Icon path={ICONS.save} /> 資料</div>
             </div>

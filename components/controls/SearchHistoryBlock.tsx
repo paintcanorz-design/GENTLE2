@@ -29,10 +29,10 @@ export const SearchHistoryBlock = ({ setShowHistory, setHistoryTab, setShowAchie
                 {searchQuery && (
                     <div 
                         className="touch-feedback"
-                        style={{ position: 'absolute', right: '14px', color: 'var(--text)', opacity: 0.5, cursor: 'pointer', padding: '4px' }} 
+                        style={{ position: 'absolute', right: '14px', color: 'var(--text)', opacity: 0.5, cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
                         onClick={() => setSearchQuery('')}
                     >
-                        <Icon path={ICONS.close} style={{ width: '1em', height: '1em' }} />
+                        <Icon path={ICONS.inputClear} style={{ width: '1em', height: '1em' }} />
                     </div>
                 )}
             </div>

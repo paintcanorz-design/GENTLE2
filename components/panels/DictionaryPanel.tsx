@@ -59,55 +59,62 @@ export const DictionaryPanel = ({
                 <>
                     <hr className="section-divider" style={{ marginTop: '8px' }} />
                     <div className="panel-header sub-header" style={{ cursor: 'default' }}>
-                        <span><Icon path={ICONS.subCat} style={{marginRight: '6px'}} /> 細部分類</span>
-                        <button 
-                            className={`header-small-btn touch-feedback ${(!currentMain || !currentSub) ? 'disabled' : ''} ${savedSubs.find((s:any) => s.main === currentMain && s.sub === currentSub) ? 'active' : ''}`}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                if(!currentMain || !currentSub) return;
-                                const exists = savedSubs.findIndex((s:any) => s.main === currentMain && s.sub === currentSub);
-                                if(exists > -1) {
-                                    const n = [...savedSubs]; n.splice(exists, 1); setSavedSubs(n);
-                                } else {
-                                    setSavedSubs([...savedSubs, { main: currentMain, sub: currentSub, label: database[currentMain].subs[currentSub].label }]);
-                                    addXP(XP_FAV);
-                                }
-                            }}
-                        >
-                            <Icon path={savedSubs.find((s:any) => s.main === currentMain && s.sub === currentSub) ? ICONS.remove : ICONS.add} style={{width:'1em', height:'1em'}} /> 
-                            {savedSubs.find((s:any) => s.main === currentMain && s.sub === currentSub) ? '移除' : '加入'}
-                        </button>
+                        <span style={{ display: 'flex', alignItems: 'center' }}>
+                            <Icon path={ICONS.subCat} style={{marginRight: '6px'}} /> 
+                            細部分類
+                            {!currentMain && <span style={{ opacity: 0.5, marginLeft: '8px', fontWeight: 'normal', fontSize: '0.85em' }}>請選擇上方分類...</span>}
+                        </span>
+                        {currentMain && (
+                            <button 
+                                className={`header-small-btn touch-feedback ${(!currentMain || !currentSub) ? 'disabled' : ''} ${savedSubs.find((s:any) => s.main === currentMain && s.sub === currentSub) ? 'active' : ''}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if(!currentMain || !currentSub) return;
+                                    const exists = savedSubs.findIndex((s:any) => s.main === currentMain && s.sub === currentSub);
+                                    if(exists > -1) {
+                                        const n = [...savedSubs]; n.splice(exists, 1); setSavedSubs(n);
+                                    } else {
+                                        setSavedSubs([...savedSubs, { main: currentMain, sub: currentSub, label: database[currentMain].subs[currentSub].label }]);
+                                        addXP(XP_FAV);
+                                    }
+                                }}
+                            >
+                                <Icon path={savedSubs.find((s:any) => s.main === currentMain && s.sub === currentSub) ? ICONS.remove : ICONS.add} style={{width:'1em', height:'1em'}} /> 
+                                {savedSubs.find((s:any) => s.main === currentMain && s.sub === currentSub) ? '移除' : '加入'}
+                            </button>
+                        )}
                     </div>
-                    <div className={`panel-content ${!currentMain ? 'compact-panel' : ''}`}>
-                        <div className="grid-container">
-                            {!currentMain && <div className="sub-placeholder" style={{gridColumn: '1 / -1', width: '100%'}}>請選擇上方分類...</div>}
-                            {currentMain && currentMain !== 'featured' && database[currentMain] && Object.keys(database[currentMain].subs).map(subKey => (
-                                <CategoryBtn 
-                                    key={subKey} 
-                                    active={currentSub === subKey} 
-                                    label={database[currentMain].subs[subKey].label} 
-                                    onClick={(e) => { 
-                                        createParticles(e.clientX, e.clientY);
-                                        setCurrentSub(subKey); 
-                                        generatePhrases(currentMain, subKey); 
-                                    }} 
-                                />
-                            ))}
-                            {currentMain === 'featured' && savedSubs.map((s:any) => (
-                                <CategoryBtn 
-                                    key={s.sub}
-                                    active={currentSub === s.sub}
-                                    label={s.label}
-                                    onClick={(e) => {
-                                        createParticles(e.clientX, e.clientY);
-                                        setCurrentSub(s.sub);
-                                        generatePhrases(s.main, s.sub);
-                                    }}
-                                />
-                            ))}
-                            {currentMain === 'featured' && savedSubs.length === 0 && <div className="sub-placeholder" style={{gridColumn: '1 / -1', width: '100%'}}>尚未有收藏的細項，請去其他分類點擊「加入」</div>}
+                    {currentMain && (
+                        <div className="panel-content">
+                            <div className="grid-container">
+                                {currentMain && currentMain !== 'featured' && database[currentMain] && Object.keys(database[currentMain].subs).map(subKey => (
+                                    <CategoryBtn 
+                                        key={subKey} 
+                                        active={currentSub === subKey} 
+                                        label={database[currentMain].subs[subKey].label} 
+                                        onClick={(e) => { 
+                                            createParticles(e.clientX, e.clientY);
+                                            setCurrentSub(subKey); 
+                                            generatePhrases(currentMain, subKey); 
+                                        }} 
+                                    />
+                                ))}
+                                {currentMain === 'featured' && savedSubs.map((s:any) => (
+                                    <CategoryBtn 
+                                        key={s.sub}
+                                        active={currentSub === s.sub}
+                                        label={s.label}
+                                        onClick={(e) => {
+                                            createParticles(e.clientX, e.clientY);
+                                            setCurrentSub(s.sub);
+                                            generatePhrases(s.main, s.sub);
+                                        }}
+                                    />
+                                ))}
+                                {currentMain === 'featured' && savedSubs.length === 0 && <div className="sub-placeholder" style={{gridColumn: '1 / -1', width: '100%'}}>尚未有收藏的細項，請去其他分類點擊「加入」</div>}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </>
             )}
         </div>

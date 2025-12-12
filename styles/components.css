@@ -17,7 +17,7 @@ html.dark-mode .panel-header { background: transparent; }
 .panel-content.compact-panel { padding-top: 0; padding-bottom: 6px; }
 .panel-content.hidden { display: none; }
 .section-title { display: none; }
-.sub-placeholder { text-align: center; color: var(--sub-text); font-size: 0.85rem; padding: 10px; width: 100%; transition: all 0.3s ease; }
+.sub-placeholder { text-align: center; color: var(--sub-text); font-size: 0.85rem; padding: 2px 10px 10px 10px; width: 100%; transition: all 0.3s ease; }
 .compact-panel .sub-placeholder { padding: 4px 10px; margin-top: -2px; }
 .panel-header.sub-header { padding-top: 5px; }
 
@@ -145,7 +145,7 @@ html.dark-mode .panel-header { background: transparent; }
 .history-group { display: flex; gap: 8px; width: 100%; order: 1; }
 .search-input { flex: 1; padding: 12px 20px; border: none; border-radius: 50px; font-size: 0.95rem; outline: none; background: var(--card); color: var(--text); transition: all 0.2s ease; box-shadow: none; }
 .search-input:focus { background: var(--card); box-shadow: 0 0 0 2px var(--primary); }
-.search-btn { width: 70px; background-color: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 50px; font-size: 0.95rem; font-weight: 700; cursor: pointer; box-shadow: none; }
+.search-btn { width: 70px; background-color: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 50px; font-size: 0.95rem; font-weight: 700; cursor: pointer; box-shadow: none; padding: 12px 0; }
 @media (max-width: 600px) { .search-btn { font-size: 0.8rem; } }
 .history-btn { flex: 1; padding: 10px 0; background-color: var(--card); border: none; border-radius: 50px; color: var(--text); font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s; box-shadow: none; }
 .history-btn:active { transform: scale(0.96); background-color: var(--hover); }

@@ -18,10 +18,10 @@ export const AiInputPanel = ({ aiInputValue, setAiInputValue, aiLoading, aiMode,
                 {aiInputValue && (
                     <div 
                         className="touch-feedback"
-                        style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--sub-text)', cursor: 'pointer', padding: '4px' }} 
+                        style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--sub-text)', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6 }} 
                         onClick={() => setAiInputValue('')}
                     >
-                        <Icon path={ICONS.close} style={{ width: '1em', height: '1em' }} />
+                        <Icon path={ICONS.inputClear} style={{ width: '1em', height: '1em' }} />
                     </div>
                 )}
             </div>
