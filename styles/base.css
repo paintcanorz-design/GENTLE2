@@ -1,0 +1,4 @@
+::-webkit-scrollbar { display: none !important; width: 0px !important; background: transparent !important; }
+html { height: auto; min-height: 100%; overflow-y: auto; overscroll-behavior-y: auto; -webkit-tap-highlight-color: transparent; touch-action: manipulation; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+body { margin: 0; padding: 0; background-color: var(--bg); color: var(--text); -webkit-text-size-adjust: 100%; width: 100%; transition: background-color 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), color 0.4s; -webkit-overflow-scrolling: touch; overflow-y: auto; height: auto; position: relative; }
+body.hide-fun .xp-container { display: none !important; }
