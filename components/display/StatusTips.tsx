@@ -3,34 +3,41 @@ import { Icon } from '../UI_Components';
 import { ICONS } from '../../constants';
 
 export const StatusTips = ({ aiLoading, statusText }: any) => {
-    let content;
+    let iconPath = ICONS.logo;
+    let displayText = statusText;
+    let isPulsing = false;
+
     if (aiLoading) {
-        content = statusText;
-    } else if (statusText.startsWith('📍')) {
-        const text = statusText.substring(2);
-        content = (
-            <span style={{ display: 'flex', alignItems: 'center' }}>
-                <Icon path={ICONS.subCat} style={{ width: '1.2em', height: '1.2em', marginRight: '4px' }} />
-                {text}
-            </span>
-        );
-    } else if (statusText.startsWith('🔍')) {
-         content = (
-            <span style={{ display: 'flex', alignItems: 'center' }}>
-                <Icon path={ICONS.search} style={{ width: '1.2em', height: '1.2em', marginRight: '4px' }} />
-                {statusText.substring(2)}
-            </span>
-        );
+        iconPath = ICONS.sparkle;
+        isPulsing = true;
     } else {
-        content = <span dangerouslySetInnerHTML={{ __html: `<span class="status-dot"></span> ${statusText}` }} />;
+        if (statusText.startsWith('📍')) {
+            iconPath = ICONS.subCat;
+            displayText = statusText.substring(2).trim();
+        } else if (statusText.startsWith('✅')) {
+            iconPath = ICONS.star;
+            displayText = statusText.substring(2).trim();
+        } else if (statusText.startsWith('✨')) {
+            iconPath = ICONS.ai;
+            displayText = statusText.substring(2).trim();
+        } else if (statusText.startsWith('🔍')) {
+            iconPath = ICONS.search;
+            displayText = statusText.substring(2).trim();
+        }
     }
 
     return (
         <div className="status-tips-container">
-            <div className={`status-indicator ${aiLoading ? 'pulsing' : ''}`}>
-                {content}
+            <div className={`status-indicator ${isPulsing ? 'pulsing' : ''}`}>
+                <Icon path={iconPath} style={{ marginRight: '6px' }} />
+                {displayText}
             </div>
-            <div className="tips-text-right">💡 點選語句可複製，按鈕可刷新</div>
+            {!aiLoading && (
+                <div className="tips-text-right" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                    <Icon path={ICONS.lightbulb} style={{ marginRight: '4px', width: '0.9em', height: '0.9em' }} />
+                    <span>點擊語句可複製</span>
+                </div>
+            )}
         </div>
     );
 };
