@@ -21,7 +21,6 @@ export const WelcomeModal = ({ onClose, database, unlockAchievement }: any) => {
         const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
         const randomEmoji = DEFAULT_FACES[Math.floor(Math.random() * DEFAULT_FACES.length)];
         
-        // Star logic - 20% for 5 stars (Gold), 20% for 4 stars (Silver), else 1-3 stars
         const rand = Math.random();
         let stars = 3;
         let frame = "";

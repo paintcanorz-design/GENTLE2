@@ -1,4 +1,3 @@
-
 export interface Phrase {
   jp: string;
   cn: string;

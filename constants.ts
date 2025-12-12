@@ -1,5 +1,3 @@
-
-
 import { Achievement } from './types';
 
 export const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSM6yn6wGB_TcdLtSDqQMiaDL3WICybpnSqDXqMn8sQ1XFLjiqdqqQib2bO1x7nAHrWYVK7VSrDU2io/pub?output=csv';
