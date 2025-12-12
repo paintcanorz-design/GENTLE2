@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { UserAchievement, AppSettings } from '../types';
 import { ACHIEVEMENTS } from '../constants';
@@ -76,11 +77,14 @@ export const useGameLogic = (settings: AppSettings, setSettings: React.Dispatch<
 
     const addXP = (amount: number) => {
         let newXP = settings.userXP + amount;
-        let level = 1;
+        let level = settings.userLevel; // Fix: Start from current level
+        
         const getXPForLevel = (lvl: number) => (lvl >= 200 ? 50 : lvl >= 100 ? 20 : 5);
-        while (true) {
-            let needed = getXPForLevel(level);
-            if (newXP >= needed) { newXP -= needed; level++; } else break;
+        
+        // Loop to check if we have enough XP to level up (possibly multiple times)
+        while (newXP >= getXPForLevel(level)) {
+            newXP -= getXPForLevel(level);
+            level++;
         }
 
         if (level > settings.userLevel) {
