@@ -78,6 +78,29 @@ export const useAppLogic = () => {
         }
     }, [customBg]);
 
+    // Send BG Color to Wix
+    useEffect(() => {
+        let color = customBg;
+        if (!color) {
+            if (settings.darkMode) {
+                if (settings.userTheme === 'tech') color = '#050A14';
+                else if (settings.userTheme === 'plurk') color = '#1A1A1A';
+                else color = '#000000';
+            } else {
+                switch(settings.userTheme) {
+                    case 'gold': color = '#FFF9E6'; break;
+                    case 'orange': color = '#FFF5EE'; break;
+                    case 'twitter': color = '#FFFFFF'; break;
+                    case 'fanbox': color = '#F8F8F8'; break;
+                    case 'tech': color = '#F0F5FF'; break;
+                    case 'plurk': color = '#FDF6E3'; break;
+                    default: color = '#F2F2F7'; break;
+                }
+            }
+        }
+        window.parent.postMessage({ type: 'CHANGE_BG', color }, "*");
+    }, [settings.userTheme, settings.darkMode, customBg]);
+
     // Sync data to parent (iframe context)
     useEffect(() => {
         const payload = {
